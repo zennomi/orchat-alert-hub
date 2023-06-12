@@ -1,0 +1,8 @@
+orchai - Get Orchai Lending Pool info 
+subscription - Config your service subscription
+meme - get random meme
+quote - get random quote
+token - /token <token-symbol> to get price chart of token we supported 
+cap - /cap <token-symbol> to get market cap chart of token we supported 
+top10cap - to get chart of top 10 market cap token
+supportedtoken - to get list of supported token
