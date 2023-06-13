@@ -18,15 +18,15 @@ setOrchaiWalletAddressScene.enter(async (ctx) => {
     let replyText = "";
     if (!walletAddress) {
         replyText =
-            "You have not set up a wallet address. Send me the wallet address you want to receive notification";
+            "You have not set up a wallet address. Send me the wallet address you want to receive information";
     } else {
         replyText =
             "Your current wallet address is " +
             walletAddress +
-            ". Send me your new wallet address you want to receive notification";
+            ". Send me your new wallet address you want to receive information";
     }
     ctx.answerCbQuery(
-        "Send me the wallet address you want to receive notification"
+        "Send me the wallet address you want to receive information"
     );
     ctx.reply(replyText);
 });

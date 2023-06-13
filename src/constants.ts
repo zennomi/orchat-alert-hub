@@ -54,6 +54,7 @@ export const CMCMappingID: { [key: string]: number } = {
     SAND: 6210,
     RNDR: 5690,
     CAKE: 7186,
+    ORAI: 7533,
 };
 
 export const CGDomain = "https://api.coingecko.com/api/v3";

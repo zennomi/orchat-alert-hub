@@ -159,7 +159,7 @@ namespace EventListener {
                         Number(event.params?.get("capacityThreshold")) || 0;
                     if (
                         threshold > 0 &&
-                        borrowerInfo.capacity * 100 >= threshold
+                        Number(borrowerInfo.capacity) * 100 >= threshold
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
@@ -220,7 +220,7 @@ namespace EventListener {
                         Number(event.params?.get("capacityThreshold")) || 0;
                     if (
                         threshold > 0 &&
-                        borrowerInfo.capacity * 100 >= threshold
+                        Number(borrowerInfo.capacity) * 100 >= threshold
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
@@ -284,7 +284,7 @@ namespace EventListener {
                         Number(event.params?.get("capacityThreshold")) || 0;
                     if (
                         threshold > 0 &&
-                        borrowerInfo.capacity * 100 >= threshold
+                        Number(borrowerInfo.capacity) * 100 >= threshold
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,

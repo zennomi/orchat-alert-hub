@@ -16,6 +16,12 @@ namespace MessageSubscription {
                             callback_data: "subscribe_orai_dex",
                         },
                     ],
+                    [
+                        {
+                            text: "Back",
+                            callback_data: "subscribe_orai_dex",
+                        },
+                    ],
                 ],
             },
         };

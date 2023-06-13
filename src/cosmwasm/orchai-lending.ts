@@ -5,6 +5,7 @@ const {
     ADDRESS_MONEY_MARKET,
     ADDRESS_OVERSEER,
     ADDRESS_USDT,
+    ADDRESS_AUSDT,
     ADDRESS_SORAI,
     ADDRESS_SCORAI,
     ADDRESS_STATOM,
@@ -59,7 +60,7 @@ namespace OrchaiLending {
     export async function queryBorrowerInfo(
         client: CosmWasmClient,
         borrower: string
-    ): Promise<JsonObject> {
+    ) {
         let borrowerInfo = await CosmWasm.queryContractSmart(
             client,
             ADDRESS_MONEY_MARKET as string,
@@ -69,6 +70,22 @@ namespace OrchaiLending {
                 },
             }
         );
+
+        let ausdtBalance = (
+            (await CosmWasm.queryContractSmart(
+                client,
+                ADDRESS_AUSDT as string,
+                {
+                    balance: {
+                        address: borrower,
+                    },
+                }
+            )) as any
+        )["balance"];
+
+        let moneyMarketState = await queryState(client);
+        let exchangeRate = Number(moneyMarketState["prev_exchange_rate"]);
+        let totalLend = fixNumber(Number(ausdtBalance) * exchangeRate);
 
         let collateralsInfoRaw: [] = (
             (await CosmWasm.queryContractSmart(
@@ -119,6 +136,7 @@ namespace OrchaiLending {
         return {
             collaterals: collateralsInfo,
             totalCollateralsValue: totalCollateralsValue,
+            totalLend: totalLend,
             borrowLimit: fixNumber(Number(borrowLimit)),
             loanAmount: fixNumber(Number(borrowerInfo["loan_amount"])),
             capacity:
@@ -201,13 +219,13 @@ namespace OrchaiLending {
             utilizationRate: ((totalBorrow * 100) / totalDeposit).toFixed(4),
             borrowAPR: borrowAPR.toFixed(4),
             lendAPR: lendAPR.toFixed(4),
+            borrowAPY: aprToApy(Number(borrowAPR)).toFixed(4),
+            lendAPY: aprToApy(Number(lendAPR)).toFixed(4),
             collateralsInfo: collateralsInfo,
         };
     }
 
-    export async function queryCollateralsInfo(
-        client: CosmWasmClient
-    ): Promise<JsonObject> {
+    export async function queryCollateralsInfo(client: CosmWasmClient) {
         let sOraiBalance = (
             (await CosmWasm.queryContractSmart(
                 client,
@@ -314,4 +332,12 @@ export default OrchaiLending;
 
 function fixNumber(value: number): number {
     return Number((value / 10 ** 6).toFixed(4));
+}
+
+function aprToApy(apr: number) {
+    let t = 31536000;
+    let bs = 5.8;
+    let b = t / bs;
+    let apy = (1 + apr / 100 / b) ** b - 1;
+    return apy * 100;
 }

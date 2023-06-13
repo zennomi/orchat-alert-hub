@@ -15,6 +15,8 @@ import EventRepository from "../repository/event-repository";
 import { TelegramBot } from "../telegram";
 import CoinGecko from "../market/coin-gecko";
 import MarketDataRepository from "../repository/market-data-repository";
+import TokenRepository from "../repository/token-repository";
+import CoinMarketCap from "../market/coin-market-cap";
 
 var chartJSNodeCanvas = new ChartJSNodeCanvas({
     width: 1000,
@@ -90,16 +92,30 @@ namespace CronJob {
     });
 
     export const crawlTokenData = new cron.CronJob({
+        cronTime: cronTime.perMinute,
+        onTick: async () => {
+            try {
+                await CoinMarketCap.updateTokens();
+            } catch (err) {
+                console.log(err);
+            }
+        },
+        onComplete: () => {},
+        utcOffset: +7,
+        runOnInit: false,
+    });
+
+    export const crawlTokenMarketData = new cron.CronJob({
         cronTime: cronTime.perHour10,
         onTick: async () => {
             try {
                 let listSupportedToken = Object.keys(SUPPORTED_TOKEN);
 
-                for (let i = 1; i < listSupportedToken.length; i++) {
+                for (let i = 0; i < listSupportedToken.length; i++) {
                     let coinId = CGMappingID[listSupportedToken[i]];
-                    console.log(coinId);
+                    // console.log(coinId);
                     let data = await CoinGecko.getMarketChart(coinId);
-                    console.log(data.prices.length);
+                    // console.log(data.prices.length);
 
                     let marketCapDataset = [];
                     for (let i = 0; i < data.marketCaps.length; i++) {
@@ -171,7 +187,13 @@ namespace CronJob {
                             },
                         });
 
-                    let currentPrice = data.prices[data.prices.length - 1][1];
+                    let currentPrice = Number(
+                        (
+                            await TokenRepository.findByDenom(
+                                SUPPORTED_TOKEN[listSupportedToken[i]]
+                            )
+                        )?.price
+                    );
 
                     let pricesDataset = [];
                     for (let i = 0; i < data.ohlc.length; i++) {
@@ -341,6 +363,7 @@ namespace CronJob {
         // notifyOrchai.start();
         crawlTop10MarketCap.start();
         crawlTokenData.start();
+        crawlTokenMarketData.start();
         console.log("Cron job is starting");
     }
 }

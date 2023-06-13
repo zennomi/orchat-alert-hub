@@ -19,14 +19,6 @@ namespace CoinGecko {
         let result = [];
         for (let i = 0; i < marketCapData.length; i++) {
             let data = marketCapData[i];
-            let temp = {
-                coingeckoId: data.id,
-                symbol: data.symbol,
-                name: data.name,
-                marketCap: data.market_cap,
-                marketCapChangePercentage:
-                    data.market_cap_change_percentage_24h,
-            };
             result.push({
                 coingeckoId: data.id,
                 symbol: data.symbol,
