@@ -92,6 +92,13 @@ namespace Message {
                 inline_keyboard: [
                     [
                         {
+                            text: "Refresh",
+                            callback_data:
+                                "get_orchai_money_market_info_refresh",
+                        },
+                    ],
+                    [
+                        {
                             text: "Set your wallet address",
                             callback_data:
                                 "get_orchai_money_market_info_set_wallet_address",
@@ -147,9 +154,13 @@ namespace Message {
             text: MessageCreation.escapeMessage(
                 "We'll notify you when your borrowed capacity falls below the warning threshold \n" +
                     "*Current setting*: \n" +
-                    `Your wallet address: ${walletAddress}\n` +
+                    (walletAddress
+                        ? `Your wallet address: \`${walletAddress}\`\n`
+                        : `You have not set wallet address\n`) +
                     `Your current warning threshold: ${capacityThreshold}%\n` +
-                    `Notification status ${notificationStatus ? "ON" : "OFF"}\n`
+                    `Notification status: ${
+                        notificationStatus ? "*ON*" : "*OFF*"
+                    }\n`
             ),
             replyMarkup: {
                 inline_keyboard: [
@@ -193,9 +204,14 @@ namespace Message {
     ) {
         return {
             text: MessageCreation.escapeMessage(
-                "We'll notify you when you create or close an order, as well as your order is fulfilled" +
+                "We'll notify you when you create or close an order, as well as your order is fulfilled\n" +
                     "*Current setting*: \n" +
-                    `Your wallet address: ${walletAddress}\n`
+                    (walletAddress
+                        ? `Your wallet address: \`${walletAddress}\`\n`
+                        : `You have not set wallet address\n`) +
+                    `Notification status: ${
+                        notificationStatus ? "*ON*" : "*OFF*"
+                    }\n`
             ),
             replyMarkup: {
                 inline_keyboard: [

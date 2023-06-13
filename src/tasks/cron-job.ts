@@ -25,6 +25,13 @@ var chartJSNodeCanvas = new ChartJSNodeCanvas({
         modern: ["chartjs-plugin-annotation"],
     },
 });
+
+var moneyMarketInfo = {
+    message: "",
+    lendAPY: "0",
+    borrowAPY: "0",
+};
+var moneyMarketInfoMessage = "";
 namespace CronJob {
     export const notifyOrchai = new cron.CronJob({
         cronTime: cronTime.perHour0,
@@ -92,7 +99,7 @@ namespace CronJob {
     });
 
     export const crawlTokenData = new cron.CronJob({
-        cronTime: cronTime.perMinute,
+        cronTime: cronTime.perHour0,
         onTick: async () => {
             try {
                 await CoinMarketCap.updateTokens();
@@ -359,13 +366,81 @@ namespace CronJob {
         runOnInit: false,
     });
 
+    export const alertCapacityThreshold = new cron.CronJob({
+        cronTime: cronTime.perHour10,
+        onTick: async () => {
+            let cosmwasmClient = await CosmWasm.getCosmWasmClient();
+            let events = await EventRepository.findByType(EVENT_TYPE.ORCHAI);
+            for (let i = 0; i < events.length; i++) {
+                let event = events[i];
+                let walletAddress = event.params?.get("walletAddress");
+                if (walletAddress) {
+                    let capacityThreshold = Number(
+                        event.params?.get("capacityThreshold") || "0"
+                    );
+                    let borrowerInfo = await OrchaiLending.queryBorrowerInfo(
+                        cosmwasmClient,
+                        walletAddress
+                    );
+                    if (
+                        capacityThreshold > 0 &&
+                        Number(borrowerInfo.capacity) * 100 >= capacityThreshold
+                    ) {
+                        let message =
+                            "*YOU'VE REACHED WARNING THRESHOLD*\n\n" +
+                            `*Your wallet address*: ${walletAddress}\n` +
+                            `Lend: $${borrowerInfo.totalLend}\n` +
+                            `Collaterals: $${borrowerInfo.totalCollateralsValue}\n` +
+                            `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
+                            `Borrow: $${borrowerInfo.loanAmount}\n` +
+                            `Borrow capacity: ${borrowerInfo.capacity}%\n`;
+                        TelegramBot.sendMessage(
+                            event.chatId,
+                            MessageCreation.escapeMessage(message)
+                        );
+                    }
+                }
+            }
+        },
+        onComplete: () => {},
+        utcOffset: +7,
+        runOnInit: false,
+    });
+
+    export const crawMoneyMarketInfoMessage = new cron.CronJob({
+        cronTime: cronTime.perHour10,
+        onTick: async () => {
+            let cosmwasmClient = await CosmWasm.getCosmWasmClient();
+            let marketInfo = await OrchaiLending.queryMarketInfo(
+                cosmwasmClient
+            );
+            let messageText =
+                "*Orchai Money Market*\n" +
+                `Total Lend: $${marketInfo.totalLend}\n` +
+                `Total Borrow: $${marketInfo.totalBorrow}\n` +
+                `Lend APY: ${marketInfo.lendAPY}%\n` +
+                `Borrow APY:${marketInfo.borrowAPY}%\n` +
+                "\n";
+
+            moneyMarketInfo.message = messageText;
+            moneyMarketInfo.lendAPY = marketInfo.lendAPY;
+            moneyMarketInfo.borrowAPY = marketInfo.borrowAPY;
+        },
+        onComplete: () => {},
+        utcOffset: +7,
+        runOnInit: true,
+    });
+
     export async function start() {
         // notifyOrchai.start();
         crawlTop10MarketCap.start();
         crawlTokenData.start();
         crawlTokenMarketData.start();
+        alertCapacityThreshold.start();
+        crawMoneyMarketInfoMessage.start();
         console.log("Cron job is starting");
     }
 }
 
 export default CronJob;
+export { moneyMarketInfo, moneyMarketInfoMessage };

@@ -14,7 +14,6 @@ import {
     memeAPI,
     quoteAPI,
 } from "../constants";
-import MessageSubscription from "./message-subscription";
 import EventRepository from "../repository/event-repository";
 import {
     setOrchaiCapacityThresholdScene,
@@ -25,6 +24,7 @@ import MarketDataRepository from "../repository/market-data-repository";
 import CoinGecko from "../market/coin-gecko";
 import Message from "./message";
 import TokenRepository from "../repository/token-repository";
+import { moneyMarketInfo } from "../tasks/cron-job";
 
 const { BOT_TOKEN } = process.env;
 var cosmwasmClient: CosmWasmClient;
@@ -103,16 +103,9 @@ namespace TelegramBot {
             EventRepository.create(eventId, chatId, eventType, {});
         }
         event = await EventRepository.findByEventId(eventId);
-        let walletAddress = event?.params?.get("walletAddress");
 
-        let marketInfo = await OrchaiLending.queryMarketInfo(cosmwasmClient);
-        let messageText =
-            "*Orchai Money Market*\n" +
-            `Total Lend: $${marketInfo.totalLend}\n` +
-            `Total Borrow: $${marketInfo.totalBorrow}\n` +
-            `Lend APY: ${marketInfo.lendAPR}%\n` +
-            `Borrow APY:${marketInfo.borrowAPR}%\n` +
-            "\n";
+        let walletAddress = event?.params?.get("walletAddress");
+        let messageText = moneyMarketInfo.message;
 
         if (walletAddress) {
             let borrowerInfo = await OrchaiLending.queryBorrowerInfo(
@@ -120,17 +113,18 @@ namespace TelegramBot {
                 walletAddress
             );
             let netAPY =
-                (borrowerInfo.totalLend * Number(marketInfo.lendAPR) -
-                    borrowerInfo.loanAmount * Number(marketInfo.borrowAPR)) /
+                (borrowerInfo.totalLend * Number(moneyMarketInfo.lendAPY) -
+                    borrowerInfo.loanAmount *
+                        Number(moneyMarketInfo.borrowAPY)) /
                 (borrowerInfo.totalLend + borrowerInfo.loanAmount);
             messageText +=
-                `*Your wallet address*: ${walletAddress}\n` +
+                `*Your wallet address*: \`${walletAddress}\`\n` +
                 `Lend: $${borrowerInfo.totalLend}\n` +
                 `Collaterals: $${borrowerInfo.totalCollateralsValue}\n` +
                 `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
                 `Borrow: $${borrowerInfo.loanAmount}\n` +
                 `Borrow capacity: ${borrowerInfo.capacity}%\n` +
-                `Net APY: ${netAPY}%`;
+                `Net APY: ${netAPY}%\n`;
             messageText += "\n" + "You can type /orchaimm for fast information";
         } else {
             messageText +=
@@ -143,6 +137,51 @@ namespace TelegramBot {
         });
     });
 
+    bot.action("get_orchai_money_market_info_refresh", async (ctx) => {
+        ctx.reply("Wait me a minute!");
+        let message = Message.getOrchaiMoneyMarketInfo();
+
+        let chatId: string = ctx.chat?.id.toString() as string;
+        let eventType = EVENT_TYPE.ORCHAI;
+        let eventId = sha256(eventType + "_" + chatId);
+        let event = await EventRepository.findByEventId(eventId);
+        if (!event) {
+            EventRepository.create(eventId, chatId, eventType, {});
+        }
+        event = await EventRepository.findByEventId(eventId);
+
+        let walletAddress = event?.params?.get("walletAddress");
+        let messageText = moneyMarketInfo.message;
+
+        if (walletAddress) {
+            let borrowerInfo = await OrchaiLending.queryBorrowerInfo(
+                cosmwasmClient,
+                walletAddress
+            );
+            let netAPY =
+                (borrowerInfo.totalLend * Number(moneyMarketInfo.lendAPY) -
+                    borrowerInfo.loanAmount *
+                        Number(moneyMarketInfo.borrowAPY)) /
+                (borrowerInfo.totalLend + borrowerInfo.loanAmount);
+            messageText +=
+                `*Your wallet address*: \`${walletAddress}\`\n` +
+                `Lend: $${borrowerInfo.totalLend}\n` +
+                `Collaterals: $${borrowerInfo.totalCollateralsValue}\n` +
+                `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
+                `Borrow: $${borrowerInfo.loanAmount}\n` +
+                `Borrow capacity: ${borrowerInfo.capacity}%\n` +
+                `Net APY: ${netAPY}%\n`;
+            messageText += "\n" + "You can type /orchaimm for fast information";
+        } else {
+            messageText +=
+                "Setting your wallet address to see your profile at Orchai Money Market";
+        }
+
+        ctx.editMessageText(MessageCreation.escapeMessage(messageText), {
+            reply_markup: message.replyMarkup,
+            parse_mode: "MarkdownV2",
+        });
+    });
     bot.action(
         "get_orchai_money_market_info_set_wallet_address",
         Scenes.Stage.enter("set_orchai_wallet_address") as any
@@ -298,7 +337,7 @@ namespace TelegramBot {
 
     bot.action("setting_alert_back", async (ctx) => {
         let message = Message.hello();
-        ctx.replyWithMarkdownV2(message.text, {
+        ctx.editMessageText(message.text, {
             reply_markup: message.replyMarkup,
         });
     });
@@ -447,7 +486,7 @@ namespace TelegramBot {
                 throw Error();
             }
         } catch (err) {
-            ctx.reply("So sorry. Some error occurred");
+            ctx.reply("So sorry. I haven't come up with any memes yet.");
             console.log(err);
         }
     });
@@ -465,7 +504,7 @@ namespace TelegramBot {
                 throw Error();
             }
         } catch (err) {
-            ctx.reply("So sorry. Some error occurred");
+            ctx.reply("So sorry. I haven't come up with any quotes yet.");
             console.log(err);
         }
     });
@@ -479,7 +518,6 @@ namespace TelegramBot {
 
     bot.command("orchaimm", async (ctx) => {
         ctx.reply("Wait me a minute!");
-
         let chatId: string = ctx.chat?.id.toString() as string;
         let eventType = EVENT_TYPE.ORCHAI;
         let eventId = sha256(eventType + "_" + chatId);
@@ -488,16 +526,9 @@ namespace TelegramBot {
             EventRepository.create(eventId, chatId, eventType, {});
         }
         event = await EventRepository.findByEventId(eventId);
-        let walletAddress = event?.params?.get("walletAddress");
 
-        let marketInfo = await OrchaiLending.queryMarketInfo(cosmwasmClient);
-        let messageText =
-            "*Orchai Money Market*\n" +
-            `Total Lend: $${marketInfo.totalLend}\n` +
-            `Total Borrow: $${marketInfo.totalBorrow}\n` +
-            `Lend APY: ${marketInfo.lendAPY}%\n` +
-            `Borrow APY:${marketInfo.borrowAPY}%\n` +
-            "\n";
+        let walletAddress = event?.params?.get("walletAddress");
+        let messageText = moneyMarketInfo.message;
 
         if (walletAddress) {
             let borrowerInfo = await OrchaiLending.queryBorrowerInfo(
@@ -505,11 +536,12 @@ namespace TelegramBot {
                 walletAddress
             );
             let netAPY =
-                (borrowerInfo.totalLend * Number(marketInfo.lendAPR) -
-                    borrowerInfo.loanAmount * Number(marketInfo.borrowAPR)) /
+                (borrowerInfo.totalLend * Number(moneyMarketInfo.lendAPY) -
+                    borrowerInfo.loanAmount *
+                        Number(moneyMarketInfo.borrowAPY)) /
                 (borrowerInfo.totalLend + borrowerInfo.loanAmount);
             messageText +=
-                `*Your wallet address*: ${walletAddress}\n` +
+                `*Your wallet address*: \`${walletAddress}\`\n` +
                 `Lend: $${borrowerInfo.totalLend}\n` +
                 `Collaterals: $${borrowerInfo.totalCollateralsValue}\n` +
                 `Borrow limit: $${borrowerInfo.borrowLimit}\n` +

@@ -135,7 +135,7 @@ namespace OrchaiLending {
 
         return {
             collaterals: collateralsInfo,
-            totalCollateralsValue: totalCollateralsValue,
+            totalCollateralsValue: totalCollateralsValue.toFixed(4),
             totalLend: totalLend,
             borrowLimit: fixNumber(Number(borrowLimit)),
             loanAmount: fixNumber(Number(borrowerInfo["loan_amount"])),
@@ -143,7 +143,7 @@ namespace OrchaiLending {
                 (
                     (Number(borrowerInfo["loan_amount"]) * 100) /
                     Number(borrowLimit)
-                ).toFixed(4) || 0,
+                ).toFixed(2) || 0,
         };
     }
 
@@ -216,11 +216,11 @@ namespace OrchaiLending {
             totalValueLocked: totalValueLocked,
             totalLend: totalDeposit,
             totalBorrow: totalBorrow,
-            utilizationRate: ((totalBorrow * 100) / totalDeposit).toFixed(4),
-            borrowAPR: borrowAPR.toFixed(4),
-            lendAPR: lendAPR.toFixed(4),
-            borrowAPY: aprToApy(Number(borrowAPR)).toFixed(4),
-            lendAPY: aprToApy(Number(lendAPR)).toFixed(4),
+            utilizationRate: ((totalBorrow * 100) / totalDeposit).toFixed(2),
+            borrowAPR: borrowAPR.toFixed(2),
+            lendAPR: lendAPR.toFixed(2),
+            borrowAPY: aprToApy(Number(borrowAPR)).toFixed(2),
+            lendAPY: aprToApy(Number(lendAPR)).toFixed(2),
             collateralsInfo: collateralsInfo,
         };
     }

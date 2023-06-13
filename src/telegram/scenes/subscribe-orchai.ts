@@ -4,12 +4,16 @@ import sha256 from "sha256";
 import { EVENT_TYPE } from "../../constants";
 import EventRepository from "../../repository/event-repository";
 import CosmWasm from "../../cosmwasm";
+import MessageCreation from "../message-creation";
 
 const setOrchaiWalletAddressScene = new Scenes.BaseScene(
     "set_orchai_wallet_address"
 );
 
 setOrchaiWalletAddressScene.enter(async (ctx) => {
+    ctx.answerCbQuery(
+        "Send me the wallet address you want to receive information"
+    );
     let chatId = ctx.chat?.id.toString() as string;
     let eventType = EVENT_TYPE.ORCHAI;
     let eventId = sha256(eventType + "_" + chatId);
@@ -18,17 +22,11 @@ setOrchaiWalletAddressScene.enter(async (ctx) => {
     let replyText = "";
     if (!walletAddress) {
         replyText =
-            "You have not set up a wallet address. Send me the wallet address you want to receive information";
+            "You have not set up a wallet address. Send me the wallet address you want to receive information (type exit to discard change).";
     } else {
-        replyText =
-            "Your current wallet address is " +
-            walletAddress +
-            ". Send me your new wallet address you want to receive information";
+        replyText = `Your current wallet address is \`${walletAddress}\`. Send me your new wallet address you want to receive information (type exit to discard change).`;
     }
-    ctx.answerCbQuery(
-        "Send me the wallet address you want to receive information"
-    );
-    ctx.reply(replyText);
+    ctx.replyWithMarkdownV2(MessageCreation.escapeMessage(replyText));
 });
 
 setOrchaiWalletAddressScene.leave((ctx) => {
@@ -38,19 +36,28 @@ setOrchaiWalletAddressScene.leave((ctx) => {
 setOrchaiWalletAddressScene.on(message("text"), async (ctx) => {
     let message = ctx.message;
     let text = (message as any)["text"];
-    let client = await CosmWasm.getCosmWasmClient();
-    let account = await CosmWasm.queryAccount(client, text);
-    if (account) {
-        let chatId = ctx.chat?.id.toString() as string;
-        let eventType = EVENT_TYPE.ORCHAI;
-        let eventId = sha256(eventType + "_" + chatId);
-        let event = await EventRepository.findByEventId(eventId);
-        event?.params?.set("walletAddress", account.address);
-        await event?.save();
-        ctx.reply("You have just set wallet address to " + account.address);
+    if (text == "exit") {
+        ctx.reply("Your settings remain unchanged");
     } else {
-        ctx.reply("You have sent me invalid address");
+        let client = await CosmWasm.getCosmWasmClient();
+        let account = await CosmWasm.queryAccount(client, text);
+        if (account) {
+            let chatId = ctx.chat?.id.toString() as string;
+            let eventType = EVENT_TYPE.ORCHAI;
+            let eventId = sha256(eventType + "_" + chatId);
+            let event = await EventRepository.findByEventId(eventId);
+            event?.params?.set("walletAddress", account.address);
+            await event?.save();
+            ctx.replyWithMarkdownV2(
+                MessageCreation.escapeMessage(
+                    `You have just set wallet address to \`${account.address}\``
+                )
+            );
+        } else {
+            ctx.reply("You have sent me invalid address");
+        }
     }
+
     (ctx as any).scene.leave();
 });
 
@@ -72,18 +79,17 @@ setOrchaiCapacityThresholdScene.enter(async (ctx) => {
     let replyText = "";
     if (!walletAddress) {
         replyCbQuery =
-            "You have not set up a wallet address. Please setup wallet address before";
+            "You have not set up a wallet address. Please setup wallet address before.";
         replyText =
-            "You have not set up a wallet address. Please setup wallet address before";
+            "You have not set up a wallet address. Please setup wallet address before.";
         (ctx as any).scene.leave();
     } else {
         replyCbQuery = "Send me capacity threshold value";
         replyText =
-            "Your current borrower address is " +
-            walletAddress +
-            " and current capacity threshold value is " +
+            "Your current capacity threshold value is " +
             walletCapacityThreshold +
-            ". Capacity threshold value between 1 and 100, send me capacity threshold value";
+            ".\n" +
+            " Capacity threshold value between 1 and 100, send me capacity threshold value (type exit to discard change).";
     }
     ctx.answerCbQuery(replyCbQuery);
     ctx.reply(replyText);
@@ -97,23 +103,30 @@ setOrchaiCapacityThresholdScene.on(message("text"), async (ctx) => {
     let message = ctx.message;
     let capacityThreshold = 0;
     try {
-        capacityThreshold = Number((message as any)["text"]);
-        if (
-            capacityThreshold < 1 ||
-            capacityThreshold > 100 ||
-            Number.isNaN(capacityThreshold)
-        ) {
-            throw new Error("Invalid capacity threshold");
+        if ((message as any)["text"] == "exit") {
+            ctx.reply("Your settings remain unchanged");
+        } else {
+            capacityThreshold = Number((message as any)["text"]);
+            if (
+                capacityThreshold < 1 ||
+                capacityThreshold > 100 ||
+                Number.isNaN(capacityThreshold)
+            ) {
+                throw new Error("Invalid capacity threshold");
+            }
+            let chatId = ctx.chat?.id.toString() as string;
+            let eventType = EVENT_TYPE.ORCHAI;
+            let eventId = sha256(eventType + "_" + chatId);
+            let event = await EventRepository.findByEventId(eventId);
+            event?.params?.set(
+                "capacityThreshold",
+                capacityThreshold.toString()
+            );
+            await event?.save();
+            ctx.reply(
+                "You have set capacity threshold value to " + capacityThreshold
+            );
         }
-        let chatId = ctx.chat?.id.toString() as string;
-        let eventType = EVENT_TYPE.ORCHAI;
-        let eventId = sha256(eventType + "_" + chatId);
-        let event = await EventRepository.findByEventId(eventId);
-        event?.params?.set("capacityThreshold", capacityThreshold.toString());
-        await event?.save();
-        ctx.reply(
-            "You have set capacity threshold value to " + capacityThreshold
-        );
     } catch (err) {
         ctx.reply("You have entered invalid value");
     }

@@ -155,8 +155,9 @@ namespace EventListener {
                         cosmwasmClient,
                         borrowerAddress
                     );
-                    let threshold =
-                        Number(event.params?.get("capacityThreshold")) || 0;
+                    let threshold = Number(
+                        event.params?.get("capacityThreshold") || "0"
+                    );
                     if (
                         threshold > 0 &&
                         Number(borrowerInfo.capacity) * 100 >= threshold
@@ -216,8 +217,9 @@ namespace EventListener {
                         cosmwasmClient,
                         borrowerAddress
                     );
-                    let threshold =
-                        Number(event.params?.get("capacityThreshold")) || 0;
+                    let threshold = Number(
+                        event.params?.get("capacityThreshold") || "0"
+                    );
                     if (
                         threshold > 0 &&
                         Number(borrowerInfo.capacity) * 100 >= threshold
@@ -280,8 +282,9 @@ namespace EventListener {
                         cosmwasmClient,
                         borrowerAddress
                     );
-                    let threshold =
-                        Number(event.params?.get("capacityThreshold")) || 0;
+                    let threshold = Number(
+                        event.params?.get("capacityThreshold") || "0"
+                    );
                     if (
                         threshold > 0 &&
                         Number(borrowerInfo.capacity) * 100 >= threshold
@@ -573,9 +576,9 @@ namespace EventListener {
                         "'s orderbook pair with id " +
                         order.orderID +
                         " was filled " +
-                        order.filledOfferAmount +
+                        Number(order.filledOfferAmount) / 10 ** 6 +
                         "/" +
-                        order.offerAmount +
+                        Number(order.offerAmount) / 10 ** 6 +
                         " offer amount";
                     let walletAddress = order.bidderAddr;
                     let oraiDexEvents =
@@ -596,9 +599,9 @@ namespace EventListener {
                         "'s orderbook pair with id " +
                         order.orderID +
                         " was filled " +
-                        order.offerAmount +
+                        Number(order.offerAmount) / 10 ** 6 +
                         "/" +
-                        order.filledOfferAmount +
+                        Number(order.filledOfferAmount) / 10 ** 6 +
                         " offer amount";
                     let walletAddress = order.bidderAddr;
                     let oraiDexEvents =
