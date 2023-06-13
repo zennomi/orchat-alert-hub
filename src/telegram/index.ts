@@ -475,18 +475,26 @@ namespace TelegramBot {
         try {
             let memeResponse = await axios.get(memeAPI);
             if (memeResponse.status == 200) {
-                let url = memeResponse.data.url;
-                // limit 21429627 bytes
-                try {
-                    ctx.replyWithPhoto({ url: url });
-                } catch (err) {
-                    console.log(err);
+                let memeUrl = memeResponse.data.url;
+                memeResponse = await axios.get(memeUrl);
+                if (Number(memeResponse.data.length) > 4194304) {
+                    throw Error();
                 }
+                ctx.replyWithPhoto({ url: memeUrl });
             } else {
                 throw Error();
             }
         } catch (err) {
-            ctx.reply("So sorry. I haven't come up with any memes yet.");
+            let messagePool = [
+                "Aw, it looks like I haven't come up with a meme just yet. No worries, though! I'll keep trying to find something funny for you.",
+                "No memes available at the moment, but I'm working on it!",
+                "Looks like my meme generator is taking a little break. It seems I haven't come up with any memes just yet. Don't worry, though! I'll keep trying to find the perfect one for you.",
+                "No memes yet, but I'm on it!",
+            ];
+            let random = Math.floor(Math.random() * 1000) % messagePool.length;
+            ctx.replyWithMarkdownV2(
+                MessageCreation.escapeMessage(messagePool[random])
+            );
             console.log(err);
         }
     });
@@ -504,7 +512,7 @@ namespace TelegramBot {
                 throw Error();
             }
         } catch (err) {
-            ctx.reply("So sorry. I haven't come up with any quotes yet.");
+            ctx.reply("I haven't come up with any quotes yet.");
             console.log(err);
         }
     });
