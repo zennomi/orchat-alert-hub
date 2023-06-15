@@ -164,7 +164,10 @@ namespace EventListener {
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
-                            MessageCreation.capacityThresholdAlert(borrowerInfo)
+                            MessageCreation.capacityThresholdAlert(
+                                borrowerInfo,
+                                threshold
+                            )
                         );
                     }
                 }
@@ -226,7 +229,10 @@ namespace EventListener {
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
-                            MessageCreation.capacityThresholdAlert(borrowerInfo)
+                            MessageCreation.capacityThresholdAlert(
+                                borrowerInfo,
+                                threshold
+                            )
                         );
                     }
                 }
@@ -291,7 +297,10 @@ namespace EventListener {
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
-                            MessageCreation.capacityThresholdAlert(borrowerInfo)
+                            MessageCreation.capacityThresholdAlert(
+                                borrowerInfo,
+                                threshold
+                            )
                         );
                     }
                 }
@@ -346,27 +355,20 @@ namespace EventListener {
                         );
 
                         if (order["direction"] == "Sell") {
-                            message =
-                                "sell " +
-                                order["offer_asset"].toUpperCase() +
-                                " with price " +
-                                (askAmount / offerAmount).toFixed(4) +
-                                " USDT/ORAI.";
+                            message = MessageCreation.orderSubmitted(
+                                order["order_id"],
+                                order["direction"],
+                                offerAmount.toString(),
+                                (askAmount / offerAmount).toFixed(4)
+                            );
                         } else {
-                            message =
-                                "buy " +
-                                order["ask_asset"].toUpperCase() +
-                                " with price " +
-                                (offerAmount / askAmount).toFixed(4) +
-                                " USDT/ORAI.";
+                            message = MessageCreation.orderSubmitted(
+                                order["order_id"],
+                                order["direction"],
+                                askAmount.toString(),
+                                (offerAmount / askAmount).toFixed(4)
+                            );
                         }
-                        message =
-                            "OraiDEX: " +
-                            order["bidder_addr"] +
-                            " have submitted order with id " +
-                            order["order_id"] +
-                            ": " +
-                            message;
 
                         let oraiDexEvents =
                             await EventRepository.findByWalletAddressAndType(
@@ -375,10 +377,7 @@ namespace EventListener {
                             );
                         for (let j = 0; j < oraiDexEvents.length; j++) {
                             let event = oraiDexEvents[j];
-                            TelegramBot.sendMessage(
-                                event.chatId,
-                                MessageCreation.escapeMessage(message)
-                            );
+                            TelegramBot.sendMessage(event.chatId, message);
                         }
                         i += 8;
                         // console.log(message);
@@ -433,31 +432,30 @@ namespace EventListener {
                                 ADDRESS_USDT as string
                             )
                         ) {
+                            // MessageCreation.orderCancelled(order["order_id"]);
+
                             next = 11;
-                            message =
-                                order["bidder_addr"] +
-                                " have been refunded " +
-                                order["bidder_refund"].replace(
-                                    ADDRESS_USDT as string,
-                                    " USDT."
-                                );
+                            let amount = order["bidder_refund"].replace(
+                                ADDRESS_USDT as string,
+                                ""
+                            );
+                            message = MessageCreation.orderCancelled(
+                                order["order_id"],
+                                amount,
+                                "USDT"
+                            );
                         } else {
                             next = 6;
-                            message =
-                                order["bidder_addr"] +
-                                " have been refunded " +
-                                order["bidder_refund"].replace(
-                                    "orai",
-                                    " ORAI."
-                                );
+                            let amount = order["bidder_refund"].replace(
+                                "orai",
+                                ""
+                            );
+                            message = MessageCreation.orderCancelled(
+                                order["order_id"],
+                                amount,
+                                "ORAI"
+                            );
                         }
-                        message =
-                            "OraiDEX: " +
-                            order["bidder_addr"] +
-                            " have cancelled order with id " +
-                            order["order_id"] +
-                            ". " +
-                            message;
 
                         let oraiDexEvents =
                             await EventRepository.findByWalletAddressAndType(
@@ -466,10 +464,7 @@ namespace EventListener {
                             );
                         for (let j = 0; j < oraiDexEvents.length; j++) {
                             let event = oraiDexEvents[j];
-                            TelegramBot.sendMessage(
-                                event.chatId,
-                                MessageCreation.escapeMessage(message)
-                            );
+                            TelegramBot.sendMessage(event.chatId, message);
                         }
                         i += next;
                         // console.log(message);
@@ -536,13 +531,14 @@ namespace EventListener {
                 }
                 let fulfilledOrderIDs = [];
                 let fulfilledOrders = [];
-                let partialFilledOrders = [];
                 for (let i = 0; i < listOrderMatchedObj.length; i++) {
                     let order = listOrderMatchedObj[i];
+                    // console.log(order);
                     if (order[0]["value"] == "Fulfilled") {
                         fulfilledOrders.push({
                             bidderAddr: order[1]["value"],
                             orderID: order[2]["value"],
+                            direction: order[3]["value"],
                             offerAmount: order[4]["value"],
                             filledOfferAmount: order[5]["value"],
                             askAmount: order[6]["value"],
@@ -551,58 +547,33 @@ namespace EventListener {
                         fulfilledOrderIDs.push(order[2]["value"]);
                     }
                 }
-                for (let i = 0; i < listOrderMatchedObj.length; i++) {
-                    let order = listOrderMatchedObj[i];
-                    if (
-                        order[0]["value"] == "PartialFilled" &&
-                        !fulfilledOrderIDs.includes(order[2]["value"])
-                    ) {
-                        partialFilledOrders.push({
-                            bidderAddr: order[1]["value"],
-                            orderID: order[2]["value"],
-                            offerAmount: order[4]["value"],
-                            filledOfferAmount: order[5]["value"],
-                            askAmount: order[6]["value"],
-                            filledAskAmount: order[7]["value"],
-                        });
-                    }
-                }
                 // console.log(fulfilledOrders);
                 for (let i = 0; i < fulfilledOrders.length; i++) {
                     let order = fulfilledOrders[i];
-                    let message =
-                        "OraiDEX: " +
-                        order.bidderAddr +
-                        "'s orderbook pair with id " +
-                        order.orderID +
-                        " was filled " +
-                        Number(order.filledOfferAmount) / 10 ** 6 +
-                        "/" +
-                        Number(order.offerAmount) / 10 ** 6 +
-                        " offer amount";
-                    let walletAddress = order.bidderAddr;
-                    let oraiDexEvents =
-                        await EventRepository.findByWalletAddressAndType(
-                            walletAddress,
-                            EVENT_TYPE.ORAI_DEX
+                    // MessageCreation.orderFulfilled(order.orderID, );
+                    let message = "";
+                    if (order.direction == "Sell") {
+                        message = MessageCreation.orderFulfilled(
+                            order.orderID,
+                            "sold",
+                            order.offerAmount,
+                            (
+                                Number(order.askAmount) /
+                                Number(order.offerAmount)
+                            ).toFixed(4)
                         );
-                    for (let i = 0; i < oraiDexEvents.length; i++) {
-                        let event = oraiDexEvents[i];
-                        TelegramBot.sendMessage(event.chatId, message);
+                    } else {
+                        message = MessageCreation.orderFulfilled(
+                            order.orderID,
+                            "bought",
+                            order.askAmount,
+                            (
+                                Number(order.offerAmount) /
+                                Number(order.askAmount)
+                            ).toFixed(4)
+                        );
                     }
-                }
-                for (let i = 0; i < partialFilledOrders.length; i++) {
-                    let order = partialFilledOrders[i];
-                    let message =
-                        "OraiDEX:" +
-                        order.bidderAddr +
-                        "'s orderbook pair with id " +
-                        order.orderID +
-                        " was filled " +
-                        Number(order.offerAmount) / 10 ** 6 +
-                        "/" +
-                        Number(order.filledOfferAmount) / 10 ** 6 +
-                        " offer amount";
+                    // console.log(message);
                     let walletAddress = order.bidderAddr;
                     let oraiDexEvents =
                         await EventRepository.findByWalletAddressAndType(

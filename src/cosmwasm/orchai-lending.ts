@@ -85,7 +85,10 @@ namespace OrchaiLending {
 
         let moneyMarketState = await queryState(client);
         let exchangeRate = Number(moneyMarketState["prev_exchange_rate"]);
-        let totalLend = fixNumber(Number(ausdtBalance) * exchangeRate);
+        let totalLend = fixNumber(
+            (Number(ausdtBalance) * exchangeRate) / 10 ** 6,
+            4
+        );
 
         let collateralsInfoRaw: [] = (
             (await CosmWasm.queryContractSmart(
@@ -109,14 +112,14 @@ namespace OrchaiLending {
                     info[0] as string
                 )) as any
             )["rate"];
-            price = Number(price).toFixed(4);
-            let amount = fixNumber(Number(info[1]));
+            price = fixNumber(Number(price), 4);
+            let amount = fixNumber(Number(info[1]) / 10 ** 6, 4);
             let value = amount * price;
             collateralsInfo.push({
                 denom: getCw20Denom(info[0]),
                 amount: amount,
                 price: price,
-                value: value.toFixed(4),
+                value: fixNumber(value, 4),
             });
             totalCollateralsValue += value;
         }
@@ -135,15 +138,18 @@ namespace OrchaiLending {
 
         return {
             collaterals: collateralsInfo,
-            totalCollateralsValue: totalCollateralsValue.toFixed(4),
-            totalLend: totalLend,
-            borrowLimit: fixNumber(Number(borrowLimit)),
-            loanAmount: fixNumber(Number(borrowerInfo["loan_amount"])),
+            totalCollateralsValue: fixNumber(totalCollateralsValue, 4) || 0,
+            totalLend: totalLend || 0,
+            borrowLimit: fixNumber(Number(borrowLimit) / 10 ** 6, 4) || 0,
+            loanAmount:
+                fixNumber(Number(borrowerInfo["loan_amount"]) / 10 ** 6, 4) ||
+                0,
             capacity:
-                (
+                fixNumber(
                     (Number(borrowerInfo["loan_amount"]) * 100) /
-                    Number(borrowLimit)
-                ).toFixed(2) || 0,
+                        Number(borrowLimit),
+                    2
+                ) || 0,
         };
     }
 
@@ -196,10 +202,15 @@ namespace OrchaiLending {
 
         // console.log(marketState);
         // console.log(marketConfig);
-        let totalBorrow = fixNumber(Number(marketState["total_liabilities"]));
+        let totalBorrow = fixNumber(
+            Number(marketState["total_liabilities"]) / 10 ** 6,
+            4
+        );
         let totalDeposit = fixNumber(
-            Number(marketState["prev_astable_supply"]) *
-                Number(marketState["prev_exchange_rate"])
+            (Number(marketState["prev_astable_supply"]) *
+                Number(marketState["prev_exchange_rate"])) /
+                10 ** 6,
+            4
         );
         let reservesFactor = Number(marketConfig["reserves_factor"]);
         let totalCollateralValue =
@@ -213,14 +224,15 @@ namespace OrchaiLending {
             (borrowAPR * totalBorrow * (1 - reservesFactor)) / totalDeposit;
 
         return {
-            totalValueLocked: totalValueLocked,
-            totalLend: totalDeposit,
-            totalBorrow: totalBorrow,
-            utilizationRate: ((totalBorrow * 100) / totalDeposit).toFixed(2),
-            borrowAPR: borrowAPR.toFixed(2),
-            lendAPR: lendAPR.toFixed(2),
-            borrowAPY: aprToApy(Number(borrowAPR)).toFixed(2),
-            lendAPY: aprToApy(Number(lendAPR)).toFixed(2),
+            totalValueLocked: totalValueLocked || 0,
+            totalLend: totalDeposit || 0,
+            totalBorrow: totalBorrow || 0,
+            utilizationRate:
+                fixNumber((totalBorrow * 100) / totalDeposit, 2) || 0,
+            borrowAPR: fixNumber(borrowAPR, 2) || 0,
+            lendAPR: fixNumber(lendAPR, 2) || 0,
+            borrowAPY: fixNumber(aprToApy(Number(borrowAPR)), 2) || 0,
+            lendAPY: fixNumber(aprToApy(Number(lendAPR)), 2) || 0,
             collateralsInfo: collateralsInfo,
         };
     }
@@ -297,31 +309,35 @@ namespace OrchaiLending {
 
         return {
             sOrai: {
-                price: Number(sOraiPrice).toFixed(4),
-                totalCollateral: fixNumber(Number(sOraiBalance)),
+                price: fixNumber(Number(sOraiPrice), 4),
+                totalCollateral: fixNumber(Number(sOraiBalance) / 10 ** 6, 4),
                 totalCollateralValue: fixNumber(
-                    Number(sOraiPrice) * Number(sOraiBalance)
+                    (Number(sOraiPrice) * Number(sOraiBalance)) / 10 ** 6,
+                    4
                 ),
             },
             scOrai: {
-                price: Number(scOraiPrice).toFixed(4),
-                totalCollateral: fixNumber(Number(scOraiBalance)),
+                price: fixNumber(Number(scOraiPrice), 4),
+                totalCollateral: fixNumber(Number(scOraiBalance) / 10 ** 6, 4),
                 totalCollateralValue: fixNumber(
-                    Number(scOraiPrice) * Number(scOraiBalance)
+                    (Number(scOraiPrice) * Number(scOraiBalance)) / 10 ** 6,
+                    4
                 ),
             },
             stAtom: {
-                price: Number(stAtomPrice).toFixed(4),
-                totalCollateral: fixNumber(Number(stAtomBalance)),
+                price: fixNumber(Number(stAtomPrice), 4),
+                totalCollateral: fixNumber(Number(stAtomBalance) / 10 ** 6, 4),
                 totalCollateralValue: fixNumber(
-                    Number(stAtomPrice) * Number(stAtomBalance)
+                    (Number(stAtomPrice) * Number(stAtomBalance)) / 10 ** 6,
+                    4
                 ),
             },
             stOsmo: {
-                price: Number(stOsmoPrice).toFixed(4),
-                totalCollateral: fixNumber(Number(stOsmoBalance)),
+                price: fixNumber(Number(stOsmoPrice), 4),
+                totalCollateral: fixNumber(Number(stOsmoBalance) / 10 ** 6, 4),
                 totalCollateralValue: fixNumber(
-                    Number(stOsmoPrice) * Number(stOsmoBalance)
+                    (Number(stOsmoPrice) * Number(stOsmoBalance)) / 10 ** 6,
+                    4
                 ),
             },
         };
@@ -330,8 +346,8 @@ namespace OrchaiLending {
 
 export default OrchaiLending;
 
-function fixNumber(value: number): number {
-    return Number((value / 10 ** 6).toFixed(4));
+function fixNumber(value: number, digit: number): number {
+    return Math.round(value * 10 ** digit) / 10 ** digit;
 }
 
 function aprToApy(apr: number) {

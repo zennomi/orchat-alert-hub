@@ -22,9 +22,12 @@ setOrchaiWalletAddressScene.enter(async (ctx) => {
     let replyText = "";
     if (!walletAddress) {
         replyText =
-            "You have not set up a wallet address. Send me the wallet address you want to receive information (type exit to discard change).";
+            "You have not set up a wallet address.\n" +
+            "Send me the wallet address you want to receive information (type exit to discard change).";
     } else {
-        replyText = `Your current wallet address is \`${walletAddress}\`. Send me your new wallet address you want to receive information (type exit to discard change).`;
+        replyText =
+            `Your current wallet address is \`${walletAddress}\`.\n` +
+            ` Send me your new wallet address you want to receive information (type exit to discard change).`;
     }
     ctx.replyWithMarkdownV2(MessageCreation.escapeMessage(replyText));
 });
@@ -36,7 +39,7 @@ setOrchaiWalletAddressScene.leave((ctx) => {
 setOrchaiWalletAddressScene.on(message("text"), async (ctx) => {
     let message = ctx.message;
     let text = (message as any)["text"];
-    if (text == "exit") {
+    if (text.toLowerCase() == "exit") {
         ctx.reply("Your settings remain unchanged");
     } else {
         let client = await CosmWasm.getCosmWasmClient();
@@ -50,7 +53,7 @@ setOrchaiWalletAddressScene.on(message("text"), async (ctx) => {
             await event?.save();
             ctx.replyWithMarkdownV2(
                 MessageCreation.escapeMessage(
-                    `You have just set wallet address to \`${account.address}\``
+                    `You have successfully set your wallet address to \`${account.address}\``
                 )
             );
         } else {
@@ -74,7 +77,9 @@ setOrchaiCapacityThresholdScene.enter(async (ctx) => {
     let eventId = sha256(eventType + "_" + chatId);
     let event = await EventRepository.findByEventId(eventId);
     let walletAddress = event?.params?.get("walletAddress");
-    let walletCapacityThreshold = event?.params?.get("capacityThreshold") || 0;
+    let walletCapacityThreshold = Number(
+        event?.params?.get("capacityThreshold") || "0"
+    );
     let replyCbQuery = "";
     let replyText = "";
     if (!walletAddress) {
@@ -89,7 +94,7 @@ setOrchaiCapacityThresholdScene.enter(async (ctx) => {
             "Your current capacity threshold value is " +
             walletCapacityThreshold +
             ".\n" +
-            " Capacity threshold value between 1 and 100, send me capacity threshold value (type exit to discard change).";
+            "Capacity threshold value between 1 and 100, send me capacity threshold value (type exit to discard change).";
     }
     ctx.answerCbQuery(replyCbQuery);
     ctx.reply(replyText);
@@ -103,7 +108,7 @@ setOrchaiCapacityThresholdScene.on(message("text"), async (ctx) => {
     let message = ctx.message;
     let capacityThreshold = 0;
     try {
-        if ((message as any)["text"] == "exit") {
+        if ((message as any)["text"].toLowerCase() == "exit") {
             ctx.reply("Your settings remain unchanged");
         } else {
             capacityThreshold = Number((message as any)["text"]);

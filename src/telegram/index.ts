@@ -25,6 +25,7 @@ import CoinGecko from "../market/coin-gecko";
 import Message from "./message";
 import TokenRepository from "../repository/token-repository";
 import { moneyMarketInfo } from "../tasks/cron-job";
+import { table } from "table";
 
 const { BOT_TOKEN } = process.env;
 var cosmwasmClient: CosmWasmClient;
@@ -69,30 +70,42 @@ namespace TelegramBot {
 
     bot.action("getting_information", async (ctx) => {
         let message = Message.gettingInformation();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("get_token_info", async (ctx) => {
         let message = Message.getTokenInfo();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("get_token_info_back", async (ctx) => {
         let message = Message.gettingInformation();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("get_orchai_money_market_info", async (ctx) => {
-        ctx.reply("Wait me a minute!");
+        ctx.reply("Please wait for a moment.");
         let message = Message.getOrchaiMoneyMarketInfo();
 
         let chatId: string = ctx.chat?.id.toString() as string;
@@ -113,32 +126,32 @@ namespace TelegramBot {
                 walletAddress
             );
             let netAPY =
-                (borrowerInfo.totalLend * Number(moneyMarketInfo.lendAPY) -
-                    borrowerInfo.loanAmount *
-                        Number(moneyMarketInfo.borrowAPY)) /
-                (borrowerInfo.totalLend + borrowerInfo.loanAmount);
-            messageText +=
-                `*Your wallet address*: \`${walletAddress}\`\n` +
-                `Lend: $${borrowerInfo.totalLend}\n` +
-                `Collaterals: $${borrowerInfo.totalCollateralsValue}\n` +
-                `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
-                `Borrow: $${borrowerInfo.loanAmount}\n` +
-                `Borrow capacity: ${borrowerInfo.capacity}%\n` +
-                `Net APY: ${netAPY}%\n`;
+                (borrowerInfo.totalLend * moneyMarketInfo.lendAPY -
+                    borrowerInfo.loanAmount * moneyMarketInfo.borrowAPY) /
+                    (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
+            messageText += MessageCreation.borrowerInfo(
+                walletAddress,
+                borrowerInfo,
+                netAPY.toFixed(2)
+            );
             messageText += "\n" + "You can type /orchaimm for fast information";
         } else {
             messageText +=
                 "Setting your wallet address to see your profile at Orchai Money Market";
         }
 
-        ctx.editMessageText(MessageCreation.escapeMessage(messageText), {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(messageText, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("get_orchai_money_market_info_refresh", async (ctx) => {
-        ctx.reply("Wait me a minute!");
+        ctx.reply("Please wait for a moment.");
         let message = Message.getOrchaiMoneyMarketInfo();
 
         let chatId: string = ctx.chat?.id.toString() as string;
@@ -159,28 +172,26 @@ namespace TelegramBot {
                 walletAddress
             );
             let netAPY =
-                (borrowerInfo.totalLend * Number(moneyMarketInfo.lendAPY) -
-                    borrowerInfo.loanAmount *
-                        Number(moneyMarketInfo.borrowAPY)) /
-                (borrowerInfo.totalLend + borrowerInfo.loanAmount);
-            messageText +=
-                `*Your wallet address*: \`${walletAddress}\`\n` +
-                `Lend: $${borrowerInfo.totalLend}\n` +
-                `Collaterals: $${borrowerInfo.totalCollateralsValue}\n` +
-                `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
-                `Borrow: $${borrowerInfo.loanAmount}\n` +
-                `Borrow capacity: ${borrowerInfo.capacity}%\n` +
-                `Net APY: ${netAPY}%\n`;
+                (borrowerInfo.totalLend * moneyMarketInfo.lendAPY -
+                    borrowerInfo.loanAmount * moneyMarketInfo.borrowAPY) /
+                    (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
+            messageText += MessageCreation.borrowerInfo(
+                walletAddress,
+                borrowerInfo,
+                netAPY.toFixed(2)
+            );
             messageText += "\n" + "You can type /orchaimm for fast information";
         } else {
             messageText +=
                 "Setting your wallet address to see your profile at Orchai Money Market";
         }
 
-        ctx.editMessageText(MessageCreation.escapeMessage(messageText), {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.replyWithMarkdownV2(messageText);
+            ctx.answerCbQuery("");
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
     bot.action(
         "get_orchai_money_market_info_set_wallet_address",
@@ -189,25 +200,38 @@ namespace TelegramBot {
 
     bot.action("get_orchai_money_market_info_back", async (ctx) => {
         let message = Message.gettingInformation();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("getting_information_back", async (ctx) => {
         let message = Message.hello();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("setting_alert", async (ctx) => {
         let message = Message.settingAlert();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("setting_alert_orchai", async (ctx) => {
@@ -230,10 +254,14 @@ namespace TelegramBot {
             capacityThreshold,
             notificationStatus
         );
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action(
@@ -261,19 +289,27 @@ namespace TelegramBot {
                 event?.params?.get("capacityThreshold") || "0",
                 notificationStatus
             );
-            ctx.editMessageText(message.text, {
-                reply_markup: message.replyMarkup,
-                parse_mode: "MarkdownV2",
-            });
+            try {
+                await ctx.editMessageText(message.text, {
+                    reply_markup: message.replyMarkup,
+                    parse_mode: "MarkdownV2",
+                });
+            } catch (err) {
+                ctx.answerCbQuery("");
+            }
         }
     );
 
     bot.action("setting_alert_orchai_back", async (ctx) => {
         let message = Message.settingAlert();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("setting_alert_orai_dex", async (ctx) => {
@@ -293,10 +329,14 @@ namespace TelegramBot {
             walletAddress,
             notificationStatus
         );
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action(
@@ -320,26 +360,39 @@ namespace TelegramBot {
                 event?.params?.get("walletAddress") || "",
                 notificationStatus
             );
-            ctx.editMessageText(message.text, {
-                reply_markup: message.replyMarkup,
-                parse_mode: "MarkdownV2",
-            });
+            try {
+                await ctx.editMessageText(message.text, {
+                    reply_markup: message.replyMarkup,
+                    parse_mode: "MarkdownV2",
+                });
+            } catch (err) {
+                ctx.answerCbQuery("");
+            }
         }
     );
 
     bot.action("setting_alert_orai_dex_back", async (ctx) => {
         let message = Message.settingAlert();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-            parse_mode: "MarkdownV2",
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.action("setting_alert_back", async (ctx) => {
         let message = Message.hello();
-        ctx.editMessageText(message.text, {
-            reply_markup: message.replyMarkup,
-        });
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
     });
 
     bot.command("p", async (ctx) => {
@@ -464,14 +517,48 @@ namespace TelegramBot {
         let result = await MarketDataRepository.findByType(
             MARKET_DATA_TYPE.TOP_10_MARKET_CAP
         );
+        let data = result?.data;
+        let dataTable = [];
+        dataTable.push(["#", "Coin", "Price", "Price 24h%"]);
+        for (let i = 0; i < data.length; i++) {
+            dataTable.push([
+                i + 1,
+                data[i].symbol.toUpperCase(),
+                data[i].price,
+                Number(data[i].priceChangePercentage).toFixed(2) + "%",
+            ]);
+        }
+        let message =
+            "```\n" +
+            table(dataTable, {
+                drawHorizontalLine: () => false,
+                drawVerticalLine: () => false,
+            }) +
+            "```";
+        ctx.replyWithMarkdownV2(message);
         if (result?.photo) {
             let photo = (result.photo as any)[0].buffer as Buffer;
             ctx.replyWithPhoto({ source: photo });
         }
     });
 
+    bot.command("supportedtoken", async (ctx) => {
+        let listSupportedToken = Object.keys(SUPPORTED_TOKEN);
+        let tokens = "";
+        for (let i = 0; i < listSupportedToken.length; i++) {
+            tokens += `*${listSupportedToken[i]}*`;
+            if (i != listSupportedToken.length - 1) {
+                tokens += ", ";
+            } else {
+                tokens += ".";
+            }
+        }
+        let message = "Currently we support: " + tokens;
+        ctx.replyWithMarkdownV2(MessageCreation.escapeMessage(message));
+    });
+
     bot.command("meme", async (ctx) => {
-        ctx.reply("Wait me a minute!!!");
+        ctx.reply("Please wait for a moment.!!");
         try {
             let memeResponse = await axios.get(memeAPI);
             if (memeResponse.status == 200) {
@@ -495,12 +582,12 @@ namespace TelegramBot {
             ctx.replyWithMarkdownV2(
                 MessageCreation.escapeMessage(messagePool[random])
             );
-            console.log(err);
+            // console.log(err);
         }
     });
 
     bot.command("quote", async (ctx) => {
-        ctx.reply("Wait me a minute!!!");
+        ctx.reply("Please wait for a moment.!!");
         try {
             let quoteResponse = await axios.get(quoteAPI);
             if (quoteResponse.status == 200) {
@@ -513,7 +600,7 @@ namespace TelegramBot {
             }
         } catch (err) {
             ctx.reply("I haven't come up with any quotes yet.");
-            console.log(err);
+            // console.log(err);
         }
     });
 
@@ -525,7 +612,7 @@ namespace TelegramBot {
     });
 
     bot.command("orchaimm", async (ctx) => {
-        ctx.reply("Wait me a minute!");
+        ctx.reply("Please wait for a moment.");
         let chatId: string = ctx.chat?.id.toString() as string;
         let eventType = EVENT_TYPE.ORCHAI;
         let eventId = sha256(eventType + "_" + chatId);
@@ -544,25 +631,21 @@ namespace TelegramBot {
                 walletAddress
             );
             let netAPY =
-                (borrowerInfo.totalLend * Number(moneyMarketInfo.lendAPY) -
-                    borrowerInfo.loanAmount *
-                        Number(moneyMarketInfo.borrowAPY)) /
-                (borrowerInfo.totalLend + borrowerInfo.loanAmount);
-            messageText +=
-                `*Your wallet address*: \`${walletAddress}\`\n` +
-                `Lend: $${borrowerInfo.totalLend}\n` +
-                `Collaterals: $${borrowerInfo.totalCollateralsValue}\n` +
-                `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
-                `Borrow: $${borrowerInfo.loanAmount}\n` +
-                `Borrow capacity: ${borrowerInfo.capacity}%\n` +
-                `Net APY: ${netAPY}%\n`;
+                (borrowerInfo.totalLend * moneyMarketInfo.lendAPY -
+                    borrowerInfo.loanAmount * moneyMarketInfo.borrowAPY) /
+                    (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
+            messageText += MessageCreation.borrowerInfo(
+                walletAddress,
+                borrowerInfo,
+                netAPY.toFixed(2)
+            );
             messageText += "\n" + "You can type /orchaimm for fast information";
         } else {
             messageText +=
                 "Setting your wallet address to see your profile at Orchai Money Market";
         }
 
-        ctx.replyWithMarkdownV2(MessageCreation.escapeMessage(messageText));
+        ctx.replyWithMarkdownV2(messageText);
     });
 
     bot.on("text", async (ctx) => {
@@ -571,6 +654,11 @@ namespace TelegramBot {
             reply_markup: message.replyMarkup,
         });
     });
+
+    bot.on("callback_query", (ctx) => {
+        ctx.answerCbQuery();
+    });
+
     export async function sendMessage(chatId: string, msg: string) {
         try {
             await bot.telegram.sendMessage(chatId, msg, {
@@ -592,7 +680,6 @@ namespace TelegramBot {
     export async function launchBot() {
         cosmwasmClient = await CosmWasm.getCosmWasmClient();
         bot.launch();
-        console.log("Bot is working . . .");
     }
 }
 

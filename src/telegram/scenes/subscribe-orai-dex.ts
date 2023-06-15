@@ -19,9 +19,12 @@ setOraiDEXWalletAddressScene.enter(async (ctx) => {
     let replyText = "";
     if (!walletAddress) {
         replyText =
-            "You have not set up a wallet address. Send me the wallet address you want to receive information (type exit to discard change).";
+            "You have not set up a wallet address.\n" +
+            "Send me the wallet address you want to receive information (type exit to discard change).";
     } else {
-        replyText = `Your current wallet address is \`${walletAddress}\`. Send me your new wallet address you want to receive information (type exit to discard change).`;
+        replyText =
+            `Your current wallet address is \`${walletAddress}\`.\n` +
+            `Send me your new wallet address you want to receive information (type exit to discard change).`;
     }
     ctx.answerCbQuery(
         "Send me the wallet address you want to receive notification"
@@ -36,7 +39,7 @@ setOraiDEXWalletAddressScene.leave((ctx) => {
 setOraiDEXWalletAddressScene.on(message("text"), async (ctx) => {
     let message = ctx.message;
     let text = (message as any)["text"];
-    if (text == "exit") {
+    if (text.toLowerCase() == "exit") {
         ctx.reply("Your settings remain unchanged");
     } else {
         let client = await CosmWasm.getCosmWasmClient();
@@ -50,7 +53,7 @@ setOraiDEXWalletAddressScene.on(message("text"), async (ctx) => {
             await event?.save();
             ctx.replyWithMarkdownV2(
                 MessageCreation.escapeMessage(
-                    `You have just set wallet address to \`${account.address}\``
+                    `You have successfully set your wallet address to \`${account.address}\``
                 )
             );
         } else {

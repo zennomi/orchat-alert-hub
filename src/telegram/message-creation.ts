@@ -1,29 +1,96 @@
 namespace MessageCreation {
     export function orchaiInfo(marketInfo: any) {
-        return escapeMessage(
-            "Orchai Lending Pool info: \n" +
-                JSON.stringify(marketInfo, null, "\t")
-        );
+        let message =
+            "*Orchai Money Market*\n" +
+            `Total Lend: $${marketInfo.totalLend}\n` +
+            `Total Borrow: $${marketInfo.totalBorrow}\n` +
+            `Lend APY: ${marketInfo.lendAPY}%\n` +
+            `Borrow APY:${marketInfo.borrowAPY}%\n` +
+            "\n";
+        return escapeMessage(message);
     }
 
-    export function borrowerInfo(borrowerInfo: any) {
-        return escapeMessage(
-            "Your wallet info: \n" + JSON.stringify(borrowerInfo, null, "\t")
-        );
+    export function borrowerInfo(
+        walletAddress: string,
+        borrowerInfo: any,
+        netAPY: string
+    ) {
+        let message =
+            `*Your wallet address*: \`${walletAddress}\`\n` +
+            `Lend: $${borrowerInfo.totalLend}\n` +
+            `Borrow: $${borrowerInfo.loanAmount}\n` +
+            `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
+            `Borrow capacity: ${borrowerInfo.capacity}%\n` +
+            `Net APY: ${netAPY}%\n`;
+        return escapeMessage(message);
     }
 
     export function liquidationAlert(borrowerInfo: any) {
-        return escapeMessage(
-            "You have been liquidated. Your wallet info: \n" +
-                JSON.stringify(borrowerInfo, null, "\t")
-        );
+        let message =
+            "*Orchai Money Market: Warning!*\n\n" +
+            `You have been liquidated\n` +
+            `Here's your current wallet status:\n` +
+            `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
+            `Borrow: $${borrowerInfo.loanAmount}\n` +
+            `Borrow capacity: ${borrowerInfo.capacity}%\n`;
+        return escapeMessage(message);
     }
 
-    export function capacityThresholdAlert(borrowerInfo: any) {
-        return escapeMessage(
-            "You've reach capacity threshold. Your wallet info: \n" +
-                JSON.stringify(borrowerInfo, null, "\t")
-        );
+    export function capacityThresholdAlert(
+        borrowerInfo: any,
+        capacityThreshold: any
+    ) {
+        let message =
+            "*Orchai Money Market: Warning!*\n\n" +
+            `Your account has reached the warning threshold, currently set at ${capacityThreshold}%\n` +
+            `Here's your current wallet status:\n` +
+            `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
+            `Borrow: $${borrowerInfo.loanAmount}\n` +
+            `Borrow capacity: ${borrowerInfo.capacity}%\n`;
+        return escapeMessage(message);
+    }
+
+    export function orderSubmitted(
+        orderId: string,
+        direction: string,
+        amount: string,
+        price: string
+    ) {
+        let message =
+            `*OraiDEX OrderBook: Order Submission*\n` +
+            `Your wallet has submitted an order with ID ${orderId}: ${direction} ${
+                Number(amount) / 10 ** 6
+            } ORAI at a price of ${price} USDT/ORAI`;
+        return escapeMessage(message);
+    }
+
+    export function orderCancelled(
+        orderId: string,
+        amount: string,
+        asset: string
+    ) {
+        let message =
+            `*OraiDEX OrderBook: Order Cancellation*\n` +
+            `Your wallet has cancelled an order with ID ${orderId}.\n` +
+            `You hae been refunded ${
+                Number(amount) / 10 ** 6
+            } ${asset.toUpperCase()}.`;
+        return escapeMessage(message);
+    }
+
+    export function orderFulfilled(
+        orderId: string,
+        direction: string,
+        amount: string,
+        price: string
+    ) {
+        let message =
+            `*OraiDEX OrderBook: Order Fulfilled*\n` +
+            `Your orderbook pair with ID ${orderId} has been fulfilled.\n` +
+            `You have successfully ${direction} ${
+                Number(amount) / 10 ** 6
+            } ORAI at a price of ${price} USDT/ORAI`;
+        return escapeMessage(message);
     }
 
     export function removeJsonCurlyBracket(json: string) {

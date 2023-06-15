@@ -1,3 +1,4 @@
+import { SUPPORTED_TOKEN } from "../constants";
 import MessageCreation from "./message-creation";
 
 namespace Message {
@@ -62,6 +63,17 @@ namespace Message {
     }
 
     export function getTokenInfo() {
+        let listSupportedToken = Object.keys(SUPPORTED_TOKEN);
+        let tokens = "";
+        for (let i = 0; i < listSupportedToken.length; i++) {
+            tokens += `*${listSupportedToken[i]}*`;
+            if (i != listSupportedToken.length - 1) {
+                tokens += ", ";
+            } else {
+                tokens += ".";
+            }
+        }
+
         return {
             text: MessageCreation.escapeMessage(
                 "/p token - Get prices of the coin \n" +
@@ -69,9 +81,9 @@ namespace Message {
                     "/cm token - Get token market cap chart \n" +
                     "/calc token <amount> - Calculate the price of an amount token \n" +
                     "/top - Return top 10 market token \n" +
-                    "/top cosmos - Return top 10 token on cosmos ecosystem \n" +
                     "/supportedtoken - Return supported token \n" +
-                    "Currently we support: *ORAI*, *ATOM*, *OSMO*, *BTC*, *ETH*."
+                    "Currently we support: " +
+                    tokens
             ),
             replyMarkup: {
                 inline_keyboard: [
@@ -124,14 +136,8 @@ namespace Message {
                 inline_keyboard: [
                     [
                         {
-                            text: "Orchai",
+                            text: "Orchai Money Market",
                             callback_data: "setting_alert_orchai",
-                        },
-                    ],
-                    [
-                        {
-                            text: "OraiDex",
-                            callback_data: "setting_alert_orai_dex",
                         },
                     ],
                     [
@@ -143,6 +149,33 @@ namespace Message {
                 ],
             },
         };
+        // return {
+        //     text: MessageCreation.escapeMessage(
+        //         "Which service would you like to set an alert for?"
+        //     ),
+        //     replyMarkup: {
+        //         inline_keyboard: [
+        //             [
+        //                 {
+        //                     text: "Orchai Money Market",
+        //                     callback_data: "setting_alert_orchai",
+        //                 },
+        //             ],
+        //             [
+        //                 {
+        //                     text: "OraiDEX OrderBook",
+        //                     callback_data: "setting_alert_orai_dex",
+        //                 },
+        //             ],
+        //             [
+        //                 {
+        //                     text: "Back",
+        //                     callback_data: "setting_alert_back",
+        //                 },
+        //             ],
+        //         ],
+        //     },
+        // };
     }
 
     export function settingAlertOrchai(

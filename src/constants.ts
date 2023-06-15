@@ -28,6 +28,7 @@ export const cronTime = {
     perHour0: "0 0 * * * *",
     perHour10: "0 10 * * * *",
     perHour20: "0 20 * * * *",
+    per2Hours0: "0 0 */2 * * *",
     perDay: "0 0 0 * * *",
     perMonth: "0 0 0 0 * *",
 };
@@ -55,6 +56,13 @@ export const CMCMappingID: { [key: string]: number } = {
     RNDR: 5690,
     CAKE: 7186,
     ORAI: 7533,
+    AIRI: 11563,
+    CRO: 3635,
+    LUNC: 4172,
+    KAVA: 4846,
+    RUNE: 4157,
+    ROSE: 7653,
+    TRX: 1958,
 };
 
 export const CGDomain = "https://api.coingecko.com/api/v3";
@@ -65,6 +73,13 @@ export const CGMappingID: { [key: string]: string } = {
     OSMO: "osmosis",
     BTC: "bitcoin",
     ETH: "ethereum",
+    AIRI: "airight",
+    CRO: "crypto-com-chain",
+    LUNC: "luna-wormhole",
+    KAVA: "kava",
+    RUNE: "thorchain",
+    ROSE: "oasis-network",
+    TRX: "tron",
 };
 
 export const memeAPI = "https://meme-api.com/gimme";
@@ -85,4 +100,11 @@ export const SUPPORTED_TOKEN: { [key: string]: string } = {
     OSMO: "osmo",
     BTC: "btc",
     ETH: "eth",
+    AIRI: "airi",
+    CRO: "cro",
+    LUNC: "lunc",
+    KAVA: "kava",
+    RUNE: "rune",
+    ROSE: "rose",
+    TRX: "trx",
 };
