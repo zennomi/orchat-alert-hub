@@ -7,6 +7,7 @@ exports.TelegramBot = void 0;
 const axios_1 = __importDefault(require("axios"));
 const telegraf_1 = require("telegraf");
 const sha256_1 = __importDefault(require("sha256"));
+const table_1 = require("table");
 const cosmwasm_1 = __importDefault(require("../cosmwasm"));
 const user_repository_1 = __importDefault(require("../repository/user-repository"));
 const orchai_lending_1 = __importDefault(require("../cosmwasm/orchai-lending"));
@@ -18,7 +19,7 @@ const market_data_repository_1 = __importDefault(require("../repository/market-d
 const message_1 = __importDefault(require("./message"));
 const token_repository_1 = __importDefault(require("../repository/token-repository"));
 const cron_job_1 = require("../tasks/cron-job");
-const table_1 = require("table");
+const utils_1 = __importDefault(require("../utils"));
 const { BOT_TOKEN } = process.env;
 var cosmwasmClient;
 var TelegramBot;
@@ -208,7 +209,7 @@ var TelegramBot;
         }
         event = await event_repository_1.default.findByEventId(eventId);
         let walletAddress = event?.params?.get("walletAddress") || "";
-        let capacityThreshold = event?.params?.get("capacityThreshold") || "0";
+        let capacityThreshold = Number(event?.params?.get("capacityThreshold") || "0").toString();
         let message = message_1.default.settingAlertOrchai(walletAddress, capacityThreshold, notificationStatus);
         try {
             await ctx.editMessageText(message.text, {
@@ -229,7 +230,7 @@ var TelegramBot;
         let event = await event_repository_1.default.findByEventId(eventId);
         let notificationStatus = !event?.notificationStatus;
         await event_repository_1.default.updateNotificationStatus(eventId, notificationStatus);
-        let message = message_1.default.settingAlertOrchai(event?.params?.get("walletAddress") || "", event?.params?.get("capacityThreshold") || "0", notificationStatus);
+        let message = message_1.default.settingAlertOrchai(event?.params?.get("walletAddress") || "", Number(event?.params?.get("capacityThreshold") || "0").toString(), notificationStatus);
         try {
             await ctx.editMessageText(message.text, {
                 reply_markup: message.replyMarkup,
@@ -333,7 +334,7 @@ var TelegramBot;
                 let tokenDenom = constants_1.SUPPORTED_TOKEN[tokenStr];
                 let token = await token_repository_1.default.findByDenom(tokenDenom);
                 let message = `Token: *${tokenStr}*\n` +
-                    `Price: $${token?.price}\n` +
+                    `Price: ${utils_1.default.stringifyNumberToUSD(token?.price)}\n` +
                     `1h change: ${token?.percentageChange1h}%\n` +
                     `24h change: ${token?.percentageChange24h}%`;
                 ctx.replyWithMarkdownV2(message_creation_1.default.escapeMessage(message));
@@ -380,8 +381,8 @@ var TelegramBot;
                 let tokenDenom = constants_1.SUPPORTED_TOKEN[tokenStr];
                 let token = await token_repository_1.default.findByDenom(tokenDenom);
                 let message = `Token: *${tokenStr}*\n` +
-                    `Market cap: $${token?.marketCap}\n` +
-                    `24h Volume: $${token?.volume24h}\n` +
+                    `Market cap: ${utils_1.default.stringifyNumberToUSD(token?.marketCap)}\n` +
+                    `24h Volume: ${utils_1.default.stringifyNumberToUSD(token?.volume24h)}\n` +
                     `24h Volume change: ${token?.volumeChange24h}%`;
                 ctx.replyWithMarkdownV2(message_creation_1.default.escapeMessage(message));
                 if (data?.photo) {
@@ -421,10 +422,10 @@ var TelegramBot;
                     let btcResult = usdResult / Number(btc?.price);
                     let ethResult = usdResult / Number(eth?.price);
                     let message = `Calculating ${tokenStr} ${number} \n` +
-                        `${tokenStr} current price: $${token?.price}\n` +
-                        `=> ${usdResult} USD\n` +
-                        `=> ${btcResult} BTC\n` +
-                        `=> ${ethResult} ETH\n`;
+                        `${tokenStr} current price: ${utils_1.default.stringifyNumberToUSD(token?.price)}\n` +
+                        `=> ${utils_1.default.stringifyNumber(usdResult)} USD\n` +
+                        `=> ${utils_1.default.stringifyNumber(btcResult)} BTC\n` +
+                        `=> ${utils_1.default.stringifyNumber(ethResult)} ETH\n`;
                     ctx.replyWithMarkdownV2(message_creation_1.default.escapeMessage(message));
                 }
                 else {
@@ -522,12 +523,6 @@ var TelegramBot;
             ctx.reply("I haven't come up with any quotes yet.");
             // console.log(err);
         }
-    });
-    bot.command("hello", async (ctx) => {
-        let message = message_1.default.hello();
-        ctx.replyWithMarkdownV2(message.text, {
-            reply_markup: message.replyMarkup,
-        });
     });
     bot.command("orchaimm", async (ctx) => {
         ctx.reply("Please wait for a moment.");

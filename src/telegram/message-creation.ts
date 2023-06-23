@@ -1,9 +1,14 @@
+import Utils from "../utils";
 namespace MessageCreation {
     export function orchaiInfo(marketInfo: any) {
         let message =
             "*Orchai Money Market*\n" +
-            `Total Lend: $${marketInfo.totalLend}\n` +
-            `Total Borrow: $${marketInfo.totalBorrow}\n` +
+            `Total Lend: ${Utils.stringifyNumberToUSD(
+                marketInfo.totalLend
+            )}\n` +
+            `Total Borrow: ${Utils.stringifyNumberToUSD(
+                marketInfo.totalBorrow
+            )}\n` +
             `Lend APY: ${marketInfo.lendAPY}%\n` +
             `Borrow APY:${marketInfo.borrowAPY}%\n` +
             "\n";
@@ -17,9 +22,11 @@ namespace MessageCreation {
     ) {
         let message =
             `*Your wallet address*: \`${walletAddress}\`\n` +
-            `Lend: $${borrowerInfo.totalLend}\n` +
-            `Borrow: $${borrowerInfo.loanAmount}\n` +
-            `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
+            `Lend: ${Utils.stringifyNumberToUSD(borrowerInfo.totalLend)}\n` +
+            `Borrow: ${Utils.stringifyNumberToUSD(borrowerInfo.loanAmount)}\n` +
+            `Borrow limit: ${Utils.stringifyNumberToUSD(
+                borrowerInfo.borrowLimit
+            )}\n` +
             `Borrow capacity: ${borrowerInfo.capacity}%\n` +
             `Net APY: ${netAPY}%\n`;
         return escapeMessage(message);
@@ -30,8 +37,10 @@ namespace MessageCreation {
             "*Orchai Money Market: Warning!*\n\n" +
             `You have been liquidated\n` +
             `Here's your current wallet status:\n` +
-            `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
-            `Borrow: $${borrowerInfo.loanAmount}\n` +
+            `Borrow limit: ${Utils.stringifyNumberToUSD(
+                borrowerInfo.borrowLimit
+            )}\n` +
+            `Borrow: ${Utils.stringifyNumberToUSD(borrowerInfo.loanAmount)}\n` +
             `Borrow capacity: ${borrowerInfo.capacity}%\n`;
         return escapeMessage(message);
     }
@@ -44,8 +53,10 @@ namespace MessageCreation {
             "*Orchai Money Market: Warning!*\n\n" +
             `Your account has reached the warning threshold, currently set at ${capacityThreshold}%\n` +
             `Here's your current wallet status:\n` +
-            `Borrow limit: $${borrowerInfo.borrowLimit}\n` +
-            `Borrow: $${borrowerInfo.loanAmount}\n` +
+            `Borrow limit: ${Utils.stringifyNumberToUSD(
+                borrowerInfo.borrowLimit
+            )}\n` +
+            `Borrow: ${Utils.stringifyNumberToUSD(borrowerInfo.loanAmount)}\n` +
             `Borrow capacity: ${borrowerInfo.capacity}%\n`;
         return escapeMessage(message);
     }
@@ -58,9 +69,9 @@ namespace MessageCreation {
     ) {
         let message =
             `*OraiDEX OrderBook: Order Submission*\n` +
-            `Your wallet has submitted an order with ID ${orderId}: ${direction} ${
+            `Your wallet has submitted an order with ID ${orderId}: ${direction} ${Utils.stringifyNumber(
                 Number(amount) / 10 ** 6
-            } ORAI at a price of ${price} USDT/ORAI`;
+            )} ORAI at a price of ${price} USDT/ORAI`;
         return escapeMessage(message);
     }
 
@@ -72,9 +83,9 @@ namespace MessageCreation {
         let message =
             `*OraiDEX OrderBook: Order Cancellation*\n` +
             `Your wallet has cancelled an order with ID ${orderId}.\n` +
-            `You hae been refunded ${
+            `You have been refunded ${Utils.stringifyNumber(
                 Number(amount) / 10 ** 6
-            } ${asset.toUpperCase()}.`;
+            )} ${asset.toUpperCase()}.`;
         return escapeMessage(message);
     }
 
@@ -87,9 +98,9 @@ namespace MessageCreation {
         let message =
             `*OraiDEX OrderBook: Order Fulfilled*\n` +
             `Your orderbook pair with ID ${orderId} has been fulfilled.\n` +
-            `You have successfully ${direction} ${
+            `You have successfully ${direction} ${Utils.stringifyNumber(
                 Number(amount) / 10 ** 6
-            } ORAI at a price of ${price} USDT/ORAI`;
+            )} ORAI at a price of ${price} USDT/ORAI`;
         return escapeMessage(message);
     }
 

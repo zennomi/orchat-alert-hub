@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from "axios";
 import { Telegraf, Scenes, Markup, Context, session } from "telegraf";
 import { CosmWasmClient, coin } from "cosmwasm";
 import sha256 from "sha256";
+import { table } from "table";
 import CosmWasm from "../cosmwasm";
 import UserRepository from "../repository/user-repository";
 import OrchaiLending from "../cosmwasm/orchai-lending";
@@ -21,11 +22,10 @@ import {
     setOraiDEXWalletAddressScene,
 } from "./scenes/index";
 import MarketDataRepository from "../repository/market-data-repository";
-import CoinGecko from "../market/coin-gecko";
 import Message from "./message";
 import TokenRepository from "../repository/token-repository";
 import { moneyMarketInfo } from "../tasks/cron-job";
-import { table } from "table";
+import Utils from "../utils";
 
 const { BOT_TOKEN } = process.env;
 var cosmwasmClient: CosmWasmClient;
@@ -247,7 +247,9 @@ namespace TelegramBot {
         }
         event = await EventRepository.findByEventId(eventId);
         let walletAddress = event?.params?.get("walletAddress") || "";
-        let capacityThreshold = event?.params?.get("capacityThreshold") || "0";
+        let capacityThreshold = Number(
+            event?.params?.get("capacityThreshold") || "0"
+        ).toString();
 
         let message = Message.settingAlertOrchai(
             walletAddress,
@@ -286,7 +288,9 @@ namespace TelegramBot {
             );
             let message = Message.settingAlertOrchai(
                 event?.params?.get("walletAddress") || "",
-                event?.params?.get("capacityThreshold") || "0",
+                Number(
+                    event?.params?.get("capacityThreshold") || "0"
+                ).toString(),
                 notificationStatus
             );
             try {
@@ -408,7 +412,9 @@ namespace TelegramBot {
                 let token = await TokenRepository.findByDenom(tokenDenom);
                 let message =
                     `Token: *${tokenStr}*\n` +
-                    `Price: $${token?.price}\n` +
+                    `Price: ${Utils.stringifyNumberToUSD(
+                        token?.price as string
+                    )}\n` +
                     `1h change: ${token?.percentageChange1h}%\n` +
                     `24h change: ${token?.percentageChange24h}%`;
                 ctx.replyWithMarkdownV2(MessageCreation.escapeMessage(message));
@@ -455,8 +461,12 @@ namespace TelegramBot {
                 let token = await TokenRepository.findByDenom(tokenDenom);
                 let message =
                     `Token: *${tokenStr}*\n` +
-                    `Market cap: $${token?.marketCap}\n` +
-                    `24h Volume: $${token?.volume24h}\n` +
+                    `Market cap: ${Utils.stringifyNumberToUSD(
+                        token?.marketCap as string
+                    )}\n` +
+                    `24h Volume: ${Utils.stringifyNumberToUSD(
+                        token?.volume24h as string
+                    )}\n` +
                     `24h Volume change: ${token?.volumeChange24h}%`;
                 ctx.replyWithMarkdownV2(MessageCreation.escapeMessage(message));
                 if (data?.photo) {
@@ -497,10 +507,12 @@ namespace TelegramBot {
                     let ethResult = usdResult / Number(eth?.price);
                     let message =
                         `Calculating ${tokenStr} ${number} \n` +
-                        `${tokenStr} current price: $${token?.price}\n` +
-                        `=> ${usdResult} USD\n` +
-                        `=> ${btcResult} BTC\n` +
-                        `=> ${ethResult} ETH\n`;
+                        `${tokenStr} current price: ${Utils.stringifyNumberToUSD(
+                            token?.price as string
+                        )}\n` +
+                        `=> ${Utils.stringifyNumber(usdResult)} USD\n` +
+                        `=> ${Utils.stringifyNumber(btcResult)} BTC\n` +
+                        `=> ${Utils.stringifyNumber(ethResult)} ETH\n`;
                     ctx.replyWithMarkdownV2(
                         MessageCreation.escapeMessage(message)
                     );
@@ -602,13 +614,6 @@ namespace TelegramBot {
             ctx.reply("I haven't come up with any quotes yet.");
             // console.log(err);
         }
-    });
-
-    bot.command("hello", async (ctx) => {
-        let message = Message.hello();
-        ctx.replyWithMarkdownV2(message.text, {
-            reply_markup: message.replyMarkup,
-        });
     });
 
     bot.command("orchaimm", async (ctx) => {

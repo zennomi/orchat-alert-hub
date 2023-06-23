@@ -27,7 +27,7 @@ var Message;
                     [
                         {
                             text: "Join Orchai group",
-                            callback_data: "join_orchai_group",
+                            url: "https://t.me/orchaiofficial",
                         },
                     ],
                 ],
@@ -137,6 +137,12 @@ var Message;
                     ],
                     [
                         {
+                            text: "OraiDEX OrderBook",
+                            callback_data: "setting_alert_orai_dex",
+                        },
+                    ],
+                    [
+                        {
                             text: "Back",
                             callback_data: "setting_alert_back",
                         },
@@ -144,33 +150,6 @@ var Message;
                 ],
             },
         };
-        // return {
-        //     text: MessageCreation.escapeMessage(
-        //         "Which service would you like to set an alert for?"
-        //     ),
-        //     replyMarkup: {
-        //         inline_keyboard: [
-        //             [
-        //                 {
-        //                     text: "Orchai Money Market",
-        //                     callback_data: "setting_alert_orchai",
-        //                 },
-        //             ],
-        //             [
-        //                 {
-        //                     text: "OraiDEX OrderBook",
-        //                     callback_data: "setting_alert_orai_dex",
-        //                 },
-        //             ],
-        //             [
-        //                 {
-        //                     text: "Back",
-        //                     callback_data: "setting_alert_back",
-        //                 },
-        //             ],
-        //         ],
-        //     },
-        // };
     }
     Message.settingAlert = settingAlert;
     function settingAlertOrchai(walletAddress, capacityThreshold, notificationStatus) {

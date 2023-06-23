@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const _1 = __importDefault(require("."));
 const orai_oracle_1 = __importDefault(require("./orai-oracle"));
+const utils_1 = __importDefault(require("../utils"));
 const { ADDRESS_MONEY_MARKET, ADDRESS_OVERSEER, ADDRESS_USDT, ADDRESS_AUSDT, ADDRESS_SORAI, ADDRESS_SCORAI, ADDRESS_STATOM, ADDRESS_STOSMO, ADDRESS_SORAI_CUSTODY, ADDRESS_SCORAI_CUSTODY, ADDRESS_STATOM_CUSTODY, ADDRESS_STOSMO_CUSTODY, ADDRESS_INTEREST_MODEL, BLOCK_PER_YEAR, } = process.env;
 var OrchaiLending;
 (function (OrchaiLending) {
@@ -50,7 +51,7 @@ var OrchaiLending;
         }))["balance"];
         let moneyMarketState = await queryState(client);
         let exchangeRate = Number(moneyMarketState["prev_exchange_rate"]);
-        let totalLend = fixNumber((Number(ausdtBalance) * exchangeRate) / 10 ** 6, 4);
+        let totalLend = utils_1.default.fixNumber((Number(ausdtBalance) * exchangeRate) / 10 ** 6, 4);
         let collateralsInfoRaw = (await _1.default.queryContractSmart(client, ADDRESS_OVERSEER, {
             collaterals: {
                 borrower: borrower,
@@ -61,14 +62,14 @@ var OrchaiLending;
         for (let i = 0; i < collateralsInfoRaw.length; i++) {
             let info = collateralsInfoRaw[i];
             let price = (await orai_oracle_1.default.queryCw20Price(client, info[0]))["rate"];
-            price = fixNumber(Number(price), 4);
-            let amount = fixNumber(Number(info[1]) / 10 ** 6, 4);
+            price = utils_1.default.fixNumber(Number(price), 4);
+            let amount = utils_1.default.fixNumber(Number(info[1]) / 10 ** 6, 4);
             let value = amount * price;
             collateralsInfo.push({
                 denom: getCw20Denom(info[0]),
                 amount: amount,
                 price: price,
-                value: fixNumber(value, 4),
+                value: utils_1.default.fixNumber(value, 4),
             });
             totalCollateralsValue += value;
         }
@@ -79,12 +80,12 @@ var OrchaiLending;
         }))["borrow_limit"];
         return {
             collaterals: collateralsInfo,
-            totalCollateralsValue: fixNumber(totalCollateralsValue, 4) || 0,
+            totalCollateralsValue: utils_1.default.fixNumber(totalCollateralsValue, 4) || 0,
             totalLend: totalLend || 0,
-            borrowLimit: fixNumber(Number(borrowLimit) / 10 ** 6, 4) || 0,
-            loanAmount: fixNumber(Number(borrowerInfo["loan_amount"]) / 10 ** 6, 4) ||
+            borrowLimit: utils_1.default.fixNumber(Number(borrowLimit) / 10 ** 6, 4) || 0,
+            loanAmount: utils_1.default.fixNumber(Number(borrowerInfo["loan_amount"]) / 10 ** 6, 4) ||
                 0,
-            capacity: fixNumber((Number(borrowerInfo["loan_amount"]) * 100) /
+            capacity: utils_1.default.fixNumber((Number(borrowerInfo["loan_amount"]) * 100) /
                 Number(borrowLimit), 2) || 0,
         };
     }
@@ -112,8 +113,8 @@ var OrchaiLending;
         }))["rate"];
         // console.log(marketState);
         // console.log(marketConfig);
-        let totalBorrow = fixNumber(Number(marketState["total_liabilities"]) / 10 ** 6, 4);
-        let totalDeposit = fixNumber((Number(marketState["prev_astable_supply"]) *
+        let totalBorrow = utils_1.default.fixNumber(Number(marketState["total_liabilities"]) / 10 ** 6, 4);
+        let totalDeposit = utils_1.default.fixNumber((Number(marketState["prev_astable_supply"]) *
             Number(marketState["prev_exchange_rate"])) /
             10 ** 6, 4);
         let reservesFactor = Number(marketConfig["reserves_factor"]);
@@ -128,11 +129,11 @@ var OrchaiLending;
             totalValueLocked: totalValueLocked || 0,
             totalLend: totalDeposit || 0,
             totalBorrow: totalBorrow || 0,
-            utilizationRate: fixNumber((totalBorrow * 100) / totalDeposit, 2) || 0,
-            borrowAPR: fixNumber(borrowAPR, 2) || 0,
-            lendAPR: fixNumber(lendAPR, 2) || 0,
-            borrowAPY: fixNumber(aprToApy(Number(borrowAPR)), 2) || 0,
-            lendAPY: fixNumber(aprToApy(Number(lendAPR)), 2) || 0,
+            utilizationRate: utils_1.default.fixNumber((totalBorrow * 100) / totalDeposit, 2) || 0,
+            borrowAPR: utils_1.default.fixNumber(borrowAPR, 2) || 0,
+            lendAPR: utils_1.default.fixNumber(lendAPR, 2) || 0,
+            borrowAPY: utils_1.default.fixNumber(aprToApy(Number(borrowAPR)), 2) || 0,
+            lendAPY: utils_1.default.fixNumber(aprToApy(Number(lendAPR)), 2) || 0,
             collateralsInfo: collateralsInfo,
         };
     }
@@ -164,24 +165,24 @@ var OrchaiLending;
         let stOsmoPrice = (await orai_oracle_1.default.queryCw20Price(client, ADDRESS_STOSMO))["rate"];
         return {
             sOrai: {
-                price: fixNumber(Number(sOraiPrice), 4),
-                totalCollateral: fixNumber(Number(sOraiBalance) / 10 ** 6, 4),
-                totalCollateralValue: fixNumber((Number(sOraiPrice) * Number(sOraiBalance)) / 10 ** 6, 4),
+                price: utils_1.default.fixNumber(Number(sOraiPrice), 4),
+                totalCollateral: utils_1.default.fixNumber(Number(sOraiBalance) / 10 ** 6, 4),
+                totalCollateralValue: utils_1.default.fixNumber((Number(sOraiPrice) * Number(sOraiBalance)) / 10 ** 6, 4),
             },
             scOrai: {
-                price: fixNumber(Number(scOraiPrice), 4),
-                totalCollateral: fixNumber(Number(scOraiBalance) / 10 ** 6, 4),
-                totalCollateralValue: fixNumber((Number(scOraiPrice) * Number(scOraiBalance)) / 10 ** 6, 4),
+                price: utils_1.default.fixNumber(Number(scOraiPrice), 4),
+                totalCollateral: utils_1.default.fixNumber(Number(scOraiBalance) / 10 ** 6, 4),
+                totalCollateralValue: utils_1.default.fixNumber((Number(scOraiPrice) * Number(scOraiBalance)) / 10 ** 6, 4),
             },
             stAtom: {
-                price: fixNumber(Number(stAtomPrice), 4),
-                totalCollateral: fixNumber(Number(stAtomBalance) / 10 ** 6, 4),
-                totalCollateralValue: fixNumber((Number(stAtomPrice) * Number(stAtomBalance)) / 10 ** 6, 4),
+                price: utils_1.default.fixNumber(Number(stAtomPrice), 4),
+                totalCollateral: utils_1.default.fixNumber(Number(stAtomBalance) / 10 ** 6, 4),
+                totalCollateralValue: utils_1.default.fixNumber((Number(stAtomPrice) * Number(stAtomBalance)) / 10 ** 6, 4),
             },
             stOsmo: {
-                price: fixNumber(Number(stOsmoPrice), 4),
-                totalCollateral: fixNumber(Number(stOsmoBalance) / 10 ** 6, 4),
-                totalCollateralValue: fixNumber((Number(stOsmoPrice) * Number(stOsmoBalance)) / 10 ** 6, 4),
+                price: utils_1.default.fixNumber(Number(stOsmoPrice), 4),
+                totalCollateral: utils_1.default.fixNumber(Number(stOsmoBalance) / 10 ** 6, 4),
+                totalCollateralValue: utils_1.default.fixNumber((Number(stOsmoPrice) * Number(stOsmoBalance)) / 10 ** 6, 4),
             },
         };
     }
