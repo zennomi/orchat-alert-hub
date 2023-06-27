@@ -37,6 +37,17 @@ After build, run docker image to run bot
 docker run <image-id>
 ```
 
+## Project config params
+
+Config params were defined in `.env` and `constants.ts`.
+
+In `constants.ts`:
+
+- `CronTime`: define cron time string for cron job.
+- `CMCMappingID`: mapping token to its id for query data in coinmarketcap
+- `CGMappingID`: mapping token to its id for query data in coingecko
+- `SUPPORTED_TOKEN`: list supported token in our bot.
+
 ## Project structures explanation
 
 ### cosmwasm
@@ -54,7 +65,7 @@ This directory defines modules to query API of coingecko and coinmarketcap to ge
 
 This directory defines collections in database mongo.
 
-- `user`: while telegram user uses our bot, user information will be created in this collection. User is unique by their chatId.
+- `user`: while telegram user uses our bot, user information will be created in this collection. User is unique by their `chatId`.
 - `event`: store events user subscribed as well as their setting params to alert them correctly.
   - events is unique by `eventId`. `eventId` is created by `sha256(eventType, chatId)`. In that, `eventType` currently has `event_type_orai_dex` and `event_type_orchai` . `chatId` corresponds to the subscribed user
   - `notificationStatus` indicates whether to notify them of the event when the event occurs.
@@ -83,14 +94,3 @@ This directory defines modules to handle telegram bot actions. Need to understan
 - `message.ts`: define messages for inline button in response to user.
 - `message-creation.ts`: define functions for receive data input such as market information, borrower information,... and create message to send to user.
 - `scenes`: define `Scene`, need to understand `telegraf` to understand what is `Scene`.
-
-## Project config params
-
-Config params were defined in `.env` and `constants.ts`.
-
-In `constants.ts`:
-
-- `CronTime`: define cron time string for cron job.
-- `CMCMappingID`: mapping token to its id for query data in coinmarketcap
-- `CGMappingID`: mapping token to its id for query data in coingecko
-- `SUPPORTED_TOKEN`: list supported token in our bot.
