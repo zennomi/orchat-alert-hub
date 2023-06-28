@@ -160,7 +160,7 @@ namespace EventListener {
                     );
                     if (
                         threshold > 0 &&
-                        Number(borrowerInfo.capacity) * 100 >= threshold
+                        Number(borrowerInfo.capacity) >= threshold
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
@@ -225,7 +225,7 @@ namespace EventListener {
                     );
                     if (
                         threshold > 0 &&
-                        Number(borrowerInfo.capacity) * 100 >= threshold
+                        Number(borrowerInfo.capacity) >= threshold
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
@@ -293,7 +293,7 @@ namespace EventListener {
                     );
                     if (
                         threshold > 0 &&
-                        Number(borrowerInfo.capacity) * 100 >= threshold
+                        Number(borrowerInfo.capacity) >= threshold
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
@@ -487,7 +487,10 @@ namespace EventListener {
                     method: "subscribe",
                     id: idCounter.toString(),
                     params: {
-                        query: `tm.event='Tx' AND wasm._contract_address='${ADDRESS_ORAISWAP_LIMIT_ORDER}' AND wasm.action='execute_orderbook_pair'`,
+                        query:
+                            `tm.event='Tx' AND wasm._contract_address='${ADDRESS_ORAISWAP_LIMIT_ORDER}' ` +
+                            `AND wasm.action='execute_orderbook_pair' ` +
+                            `AND wasm-matched_order._contract_address='${ADDRESS_ORAISWAP_LIMIT_ORDER}'`,
                     },
                 })
             );
@@ -502,55 +505,34 @@ namespace EventListener {
             if (!isEmpty(result)) {
                 let transaction = result.data.value.TxResult;
                 let events = transaction.result.events;
-                let attributes = filterEvents(events, "wasm");
-
-                let filteredAttributes = filterAttributesKey(
-                    attributes,
-                    "list_order_matched"
-                );
-                let listOrderMatchedStr: string = base64ToText(
-                    filteredAttributes[0].value
-                );
-                listOrderMatchedStr = listOrderMatchedStr.replaceAll(
-                    "Attribute",
-                    ""
-                );
-                listOrderMatchedStr = listOrderMatchedStr.replaceAll(
-                    "key",
-                    '"key"'
-                );
-                listOrderMatchedStr = listOrderMatchedStr.replaceAll(
-                    "value",
-                    '"value"'
-                );
-
-                let listOrderMatchedObj = JSON.parse(listOrderMatchedStr);
-                let orderIDs: string[] = [];
-                for (let i = 0; i < listOrderMatchedObj.length; i++) {
-                    orderIDs.push(listOrderMatchedObj[i][2]["value"]);
-                }
-                let fulfilledOrderIDs = [];
+                let attributes = filterEvents(events, "wasm-matched_order");
+                let next = 10;
                 let fulfilledOrders = [];
-                for (let i = 0; i < listOrderMatchedObj.length; i++) {
-                    let order = listOrderMatchedObj[i];
-                    // console.log(order);
-                    if (order[0]["value"] == "Fulfilled") {
+                // console.log(attributes.length);
+                for (let i = 0; i < attributes.length; i += next) {
+                    // console.log(i);
+                    let status = base64ToText(attributes[i + 1].value);
+                    // console.log(status);
+                    if (status == "Fulfilled") {
                         fulfilledOrders.push({
-                            bidderAddr: order[1]["value"],
-                            orderID: order[2]["value"],
-                            direction: order[3]["value"],
-                            offerAmount: order[4]["value"],
-                            filledOfferAmount: order[5]["value"],
-                            askAmount: order[6]["value"],
-                            filledAskAmount: order[7]["value"],
+                            bidderAddr: base64ToText(attributes[i + 2].value),
+                            orderID: base64ToText(attributes[i + 3].value),
+                            direction: base64ToText(attributes[i + 4].value),
+                            offerAmount: base64ToText(attributes[i + 5].value),
+                            filledOfferAmount: base64ToText(
+                                attributes[i + 6].value
+                            ),
+                            askAmount: base64ToText(attributes[i + 7].value),
+                            filledAskAmount: base64ToText(
+                                attributes[i + 8].value
+                            ),
                         });
-                        fulfilledOrderIDs.push(order[2]["value"]);
                     }
                 }
                 // console.log(fulfilledOrders);
+
                 for (let i = 0; i < fulfilledOrders.length; i++) {
                     let order = fulfilledOrders[i];
-                    // MessageCreation.orderFulfilled(order.orderID, );
                     let message = "";
                     if (order.direction == "Sell") {
                         message = MessageCreation.orderFulfilled(

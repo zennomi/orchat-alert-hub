@@ -363,9 +363,10 @@ namespace CronJob {
                         cosmwasmClient,
                         walletAddress
                     );
+
                     if (
                         capacityThreshold > 0 &&
-                        Number(borrowerInfo.capacity) * 100 >= capacityThreshold
+                        Number(borrowerInfo.capacity) >= capacityThreshold
                     ) {
                         TelegramBot.sendMessage(
                             event.chatId,
@@ -380,7 +381,7 @@ namespace CronJob {
         },
         onComplete: () => {},
         utcOffset: +7,
-        runOnInit: false,
+        runOnInit: true,
     });
 
     export const crawMoneyMarketInfoMessage = new cron.CronJob({
