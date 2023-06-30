@@ -14,6 +14,7 @@ import {
     SUPPORTED_TOKEN,
     memeAPI,
     quoteAPI,
+    rowPerPage,
 } from "../constants";
 import EventRepository from "../repository/event-repository";
 import {
@@ -26,6 +27,7 @@ import Message from "./message";
 import TokenRepository from "../repository/token-repository";
 import { moneyMarketInfo } from "../tasks/cron-job";
 import Utils from "../utils";
+import OtherProtocols from "../market/other-protocols";
 
 const { BOT_TOKEN } = process.env;
 var cosmwasmClient: CosmWasmClient;
@@ -199,6 +201,96 @@ namespace TelegramBot {
     );
 
     bot.action("get_orchai_money_market_info_back", async (ctx) => {
+        let message = Message.gettingInformation();
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
+    });
+
+    bot.action("get_lending_apy_across_protocols", async (ctx) => {
+        let message = Message.getLendingAPYAcrossProtocols();
+        let data = await MarketDataRepository.findByType(
+            MARKET_DATA_TYPE.OTHER_PROTOCOLS_APY
+        );
+        let messageText =
+            `APY for Lending USDT Across Protocols\n` +
+            `*Orchai Money Market* (On Oraichain): ${data?.data["orchaiDepositAPY"]}%\n` +
+            `*AaveV2* (On Ethereum): ${data?.data["aaveDepositAPY"]}%\n` +
+            `*Venus* (On Binance Smart Chain): ${data?.data["venusDepositAPY"]}%\n` +
+            `You can type /lendingapy for fast information\n`;
+        try {
+            await ctx.editMessageText(
+                MessageCreation.escapeMessage(messageText),
+                {
+                    reply_markup: message.replyMarkup,
+                    parse_mode: "MarkdownV2",
+                }
+            );
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
+    });
+
+    bot.action("get_lending_apy_across_protocols_back", async (ctx) => {
+        let message = Message.gettingInformation();
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
+    });
+
+    bot.action("get_users_eligible_for_liquidation", async (ctx) => {
+        let message = Message.getUsersEligibleForLiquidation();
+        try {
+            await ctx.editMessageText(message.text, {
+                reply_markup: message.replyMarkup,
+                parse_mode: "MarkdownV2",
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
+    });
+
+    bot.action("get_users_eligible_for_liquidation_aave", async (ctx) => {
+        try {
+            let marketData = await MarketDataRepository.findByType(
+                MARKET_DATA_TYPE.OTHER_PROTOCOLS_LIQUIDATION_LIST + "_aave"
+            );
+            let data = marketData?.data.splice(0, 200);
+            let message = getPaginatedLiquidationList(data, 1, "ll_aave");
+            ctx.replyWithMarkdownV2(message.text, {
+                reply_markup: message.replyMarkup,
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
+    });
+
+    bot.action("get_users_eligible_for_liquidation_venus", async (ctx) => {
+        try {
+            let marketData = await MarketDataRepository.findByType(
+                MARKET_DATA_TYPE.OTHER_PROTOCOLS_LIQUIDATION_LIST + "_venus"
+            );
+            let data = marketData?.data.splice(0, 200);
+            let message = getPaginatedLiquidationList(data, 1, "ll_venus");
+            ctx.replyWithMarkdownV2(message.text, {
+                reply_markup: message.replyMarkup,
+            });
+        } catch (err) {
+            ctx.answerCbQuery("");
+        }
+    });
+
+    bot.action("get_users_eligible_for_liquidation_back", async (ctx) => {
         let message = Message.gettingInformation();
         try {
             await ctx.editMessageText(message.text, {
@@ -536,7 +628,7 @@ namespace TelegramBot {
             dataTable.push([
                 i + 1,
                 data[i].symbol.toUpperCase(),
-                data[i].price,
+                Utils.stringifyNumberToUSD(data[i].price),
                 Number(data[i].priceChangePercentage).toFixed(2) + "%",
             ]);
         }
@@ -653,15 +745,96 @@ namespace TelegramBot {
         ctx.replyWithMarkdownV2(messageText);
     });
 
+    bot.command("liquidation", async (ctx) => {
+        let message = ctx.message.text;
+        let tmp = message.split(" ");
+        if (tmp.length < 2) {
+            ctx.reply("Invalid protocol");
+        } else {
+            let protocol = tmp[1].toLowerCase();
+            let listSupportedProtocol = ["aave", "venus"];
+            if (listSupportedProtocol.includes(protocol)) {
+                let marketData = await MarketDataRepository.findByType(
+                    MARKET_DATA_TYPE.OTHER_PROTOCOLS_LIQUIDATION_LIST +
+                        "_" +
+                        protocol
+                );
+                let data = marketData?.data.splice(0, 200);
+                let message = getPaginatedLiquidationList(
+                    data,
+                    1,
+                    "ll_" + protocol
+                );
+                ctx.replyWithMarkdownV2(message.text, {
+                    reply_markup: message.replyMarkup,
+                });
+            } else {
+                ctx.reply("We do not support this protocol");
+            }
+        }
+    });
+
+    bot.command("lendingapy", async (ctx) => {
+        let data = await MarketDataRepository.findByType(
+            MARKET_DATA_TYPE.OTHER_PROTOCOLS_APY
+        );
+        let messageText =
+            `APY for Lending USDT Across Protocols\n` +
+            `*Orchai Money Market* (On Oraichain): ${data?.data["orchaiDepositAPY"]}%\n` +
+            `*AaveV2* (On Ethereum): ${data?.data["aaveDepositAPY"]}%\n` +
+            `*Venus* (On Binance Smart Chain): ${data?.data["venusDepositAPY"]}%\n` +
+            `You can type /lendingapy for fast information\n`;
+        ctx.replyWithMarkdownV2(MessageCreation.escapeMessage(messageText));
+    });
+
+    bot.on("callback_query", async (ctx) => {
+        try {
+            let callbackData = JSON.parse((ctx.callbackQuery as any).data);
+            if (callbackData.type == "ll_aave") {
+                let marketData = await MarketDataRepository.findByType(
+                    MARKET_DATA_TYPE.OTHER_PROTOCOLS_LIQUIDATION_LIST + "_aave"
+                );
+                let data = marketData?.data.splice(0, 200);
+                let message = getPaginatedLiquidationList(
+                    data,
+                    callbackData.action == "next"
+                        ? callbackData.current + 1
+                        : callbackData.current - 1,
+                    "ll_aave"
+                );
+                ctx.editMessageText(message.text, {
+                    reply_markup: message.replyMarkup,
+                    parse_mode: "MarkdownV2",
+                });
+            } else if (callbackData.type == "ll_venus") {
+                let marketData = await MarketDataRepository.findByType(
+                    MARKET_DATA_TYPE.OTHER_PROTOCOLS_LIQUIDATION_LIST + "_venus"
+                );
+                let data = marketData?.data.splice(0, 200);
+                let message = getPaginatedLiquidationList(
+                    data,
+                    callbackData.action == "next"
+                        ? callbackData.current + 1
+                        : callbackData.current - 1,
+                    "ll_venus"
+                );
+                ctx.editMessageText(message.text, {
+                    reply_markup: message.replyMarkup,
+                    parse_mode: "MarkdownV2",
+                });
+            }
+        } catch (err) {
+            console.log("here");
+        } finally {
+            ctx.answerCbQuery();
+        }
+    });
+
     bot.on("text", async (ctx) => {
         let message = Message.hello();
         ctx.replyWithMarkdownV2(message.text, {
             reply_markup: message.replyMarkup,
         });
-    });
-
-    bot.on("callback_query", (ctx) => {
-        ctx.answerCbQuery();
     });
 
     export async function sendMessage(chatId: string, msg: string) {
@@ -689,3 +862,80 @@ namespace TelegramBot {
 }
 
 export { TelegramBot };
+
+function getPaginatedLiquidationList(
+    data: Array<any>,
+    page: number,
+    type: string
+) {
+    let dataLength = data.length;
+    let maxPage = Math.ceil(dataLength / rowPerPage);
+    let replyMarkup = {
+        inline_keyboard: [
+            page == 1
+                ? [
+                      {
+                          text: "next page",
+                          callback_data: JSON.stringify({
+                              action: "next",
+                              current: page,
+                              type: type,
+                          }),
+                      },
+                  ]
+                : page == maxPage
+                ? [
+                      {
+                          text: "previous page",
+                          callback_data: JSON.stringify({
+                              action: "previous",
+                              current: page,
+                              type: type,
+                          }),
+                      },
+                  ]
+                : [
+                      {
+                          text: "previous page",
+                          callback_data: JSON.stringify({
+                              action: "previous",
+                              current: page,
+                              type: type,
+                          }),
+                      },
+                      {
+                          text: "next page",
+                          callback_data: JSON.stringify({
+                              action: "next",
+                              current: page,
+                              type: type,
+                          }),
+                      },
+                  ],
+        ],
+    };
+
+    let dataTable = [];
+    dataTable.push(["#", "``address``", "deposited", "borrowed"]);
+    for (let i = 0; i < rowPerPage; i++) {
+        let dataIndex = (page - 1) * rowPerPage + i;
+        dataTable.push([
+            dataIndex + 1,
+            "``" + data[dataIndex]["address"] + "``",
+            Utils.stringifyNumberToUSD(data[dataIndex]["deposit"]),
+            Utils.stringifyNumberToUSD(data[dataIndex]["borrow"]),
+        ]);
+    }
+    let text =
+        "`\n" +
+        table(dataTable, {
+            drawHorizontalLine: () => false,
+            drawVerticalLine: () => false,
+        }) +
+        "`";
+    console.log(text);
+    return {
+        text: text,
+        replyMarkup: replyMarkup,
+    };
+}

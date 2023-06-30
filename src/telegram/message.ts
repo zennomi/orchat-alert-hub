@@ -54,6 +54,18 @@ namespace Message {
                     ],
                     [
                         {
+                            text: "Get lending APY across protocols",
+                            callback_data: "get_lending_apy_across_protocols",
+                        },
+                    ],
+                    [
+                        {
+                            text: "Get users eligible for liquidation",
+                            callback_data: "get_users_eligible_for_liquidation",
+                        },
+                    ],
+                    [
+                        {
                             text: "Back",
                             callback_data: "getting_information_back",
                         },
@@ -121,6 +133,56 @@ namespace Message {
                         {
                             text: "Back",
                             callback_data: "get_orchai_money_market_info_back",
+                        },
+                    ],
+                ],
+            },
+        };
+    }
+
+    export function getLendingAPYAcrossProtocols() {
+        return {
+            replyMarkup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: "Back",
+                            callback_data:
+                                "get_lending_apy_across_protocols_back",
+                        },
+                    ],
+                ],
+            },
+        };
+    }
+
+    export function getUsersEligibleForLiquidation() {
+        return {
+            text: MessageCreation.escapeMessage(
+                `Select a protocol to retrieve a list of users who are eligible to be liquidated.\n` +
+                    `You can type /liquidation <protocol> for fast information.`
+            ),
+            replyMarkup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: "Aave",
+                            callback_data:
+                                "get_users_eligible_for_liquidation_aave",
+                        },
+                    ],
+                    [
+                        {
+                            text: "Venus",
+                            callback_data:
+                                "get_users_eligible_for_liquidation_venus",
+                        },
+                    ],
+                    [
+                        {
+                            text: "Back",
+                            callback_data:
+                                "get_users_eligible_for_liquidation_back",
                         },
                     ],
                 ],

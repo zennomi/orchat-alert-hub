@@ -17,6 +17,9 @@ import CoinGecko from "../market/coin-gecko";
 import MarketDataRepository from "../repository/market-data-repository";
 import TokenRepository from "../repository/token-repository";
 import CoinMarketCap from "../market/coin-market-cap";
+import OtherProtocols from "../market/other-protocols";
+//@ts-ignore
+import { Pagination } from "telegraf-pagination";
 
 var chartJSNodeCanvas = new ChartJSNodeCanvas({
     width: 1000,
@@ -381,10 +384,55 @@ namespace CronJob {
         },
         onComplete: () => {},
         utcOffset: +7,
+        runOnInit: false,
+    });
+
+    export const crawlOtherProtocolsAPY = new cron.CronJob({
+        cronTime: cronTime.perHour10,
+        onTick: async () => {
+            let result = await OtherProtocols.queryLendingAPY();
+            let cosmwasmClient = await CosmWasm.getCosmWasmClient();
+            let marketInfo = await OrchaiLending.queryMarketInfo(
+                cosmwasmClient
+            );
+            let data = {
+                orchaiDepositAPY: marketInfo.lendAPY,
+                aaveDepositAPY: result.aaveDepositAPY,
+                venusDepositAPY: result.venusDepositAPY,
+            };
+            // console.log(data);
+            await MarketDataRepository.createOrUpdate(
+                MARKET_DATA_TYPE.OTHER_PROTOCOLS_APY,
+                data,
+                []
+            );
+        },
+        onComplete: () => {},
+        utcOffset: +7,
+        runOnInit: false,
+    });
+
+    export const crawlOtherProtocolsLiquidationList = new cron.CronJob({
+        cronTime: cronTime.perHour30,
+        onTick: async () => {
+            let liquidationList = await OtherProtocols.queryLiquidationList();
+            await MarketDataRepository.createOrUpdate(
+                MARKET_DATA_TYPE.OTHER_PROTOCOLS_LIQUIDATION_LIST + "_aave",
+                liquidationList.aave,
+                []
+            );
+            await MarketDataRepository.createOrUpdate(
+                MARKET_DATA_TYPE.OTHER_PROTOCOLS_LIQUIDATION_LIST + "_venus",
+                liquidationList.venus,
+                []
+            );
+        },
+        onComplete: () => {},
+        utcOffset: +7,
         runOnInit: true,
     });
 
-    export const crawMoneyMarketInfoMessage = new cron.CronJob({
+    export const crawlMoneyMarketInfoMessage = new cron.CronJob({
         cronTime: cronTime.perHour10,
         onTick: async () => {
             let cosmwasmClient = await CosmWasm.getCosmWasmClient();
@@ -403,7 +451,8 @@ namespace CronJob {
     });
 
     export async function start() {
-        crawMoneyMarketInfoMessage.start();
+        crawlOtherProtocolsAPY.start();
+        crawlMoneyMarketInfoMessage.start();
         crawlTop10MarketCap.start();
         crawlTokenData.start();
         crawlTokenMarketData.start();

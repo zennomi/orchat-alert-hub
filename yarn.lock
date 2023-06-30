@@ -3108,6 +3108,11 @@ tar@^6.1.11:
     mkdirp "^1.0.3"
     yallist "^4.0.0"
 
+telegraf-pagination@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/telegraf-pagination/-/telegraf-pagination-1.4.1.tgz#78c38987d6b3472be7d4ee7089dc455876eadda4"
+  integrity sha512-+LjBQxOZbjsWL0D07m+B3oLSuTOoN5O+GJxN+FR5qray/men/InhdDzHdoTl6tUfeOm09gs/yIigdL9JKMMrTA==
+
 telegraf@^4.12.2:
   version "4.12.2"
   resolved "https://registry.yarnpkg.com/telegraf/-/telegraf-4.12.2.tgz#1cf4f38c275e04416f1282f3581833994870f0bc"

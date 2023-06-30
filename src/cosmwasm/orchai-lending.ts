@@ -139,12 +139,15 @@ namespace OrchaiLending {
 
         return {
             collaterals: collateralsInfo,
-            totalCollateralsValue: Utils.fixNumber(totalCollateralsValue, 4) || 0,
+            totalCollateralsValue:
+                Utils.fixNumber(totalCollateralsValue, 4) || 0,
             totalLend: totalLend || 0,
             borrowLimit: Utils.fixNumber(Number(borrowLimit) / 10 ** 6, 4) || 0,
             loanAmount:
-                Utils.fixNumber(Number(borrowerInfo["loan_amount"]) / 10 ** 6, 4) ||
-                0,
+                Utils.fixNumber(
+                    Number(borrowerInfo["loan_amount"]) / 10 ** 6,
+                    4
+                ) || 0,
             capacity:
                 Utils.fixNumber(
                     (Number(borrowerInfo["loan_amount"]) * 100) /
@@ -232,8 +235,9 @@ namespace OrchaiLending {
                 Utils.fixNumber((totalBorrow * 100) / totalDeposit, 2) || 0,
             borrowAPR: Utils.fixNumber(borrowAPR, 2) || 0,
             lendAPR: Utils.fixNumber(lendAPR, 2) || 0,
-            borrowAPY: Utils.fixNumber(aprToApy(Number(borrowAPR)), 2) || 0,
-            lendAPY: Utils.fixNumber(aprToApy(Number(lendAPR)), 2) || 0,
+            borrowAPY:
+                Utils.fixNumber(Utils.aprToApy(Number(borrowAPR)), 2) || 0,
+            lendAPY: Utils.fixNumber(Utils.aprToApy(Number(lendAPR)), 2) || 0,
             collateralsInfo: collateralsInfo,
         };
     }
@@ -311,7 +315,10 @@ namespace OrchaiLending {
         return {
             sOrai: {
                 price: Utils.fixNumber(Number(sOraiPrice), 4),
-                totalCollateral: Utils.fixNumber(Number(sOraiBalance) / 10 ** 6, 4),
+                totalCollateral: Utils.fixNumber(
+                    Number(sOraiBalance) / 10 ** 6,
+                    4
+                ),
                 totalCollateralValue: Utils.fixNumber(
                     (Number(sOraiPrice) * Number(sOraiBalance)) / 10 ** 6,
                     4
@@ -319,7 +326,10 @@ namespace OrchaiLending {
             },
             scOrai: {
                 price: Utils.fixNumber(Number(scOraiPrice), 4),
-                totalCollateral: Utils.fixNumber(Number(scOraiBalance) / 10 ** 6, 4),
+                totalCollateral: Utils.fixNumber(
+                    Number(scOraiBalance) / 10 ** 6,
+                    4
+                ),
                 totalCollateralValue: Utils.fixNumber(
                     (Number(scOraiPrice) * Number(scOraiBalance)) / 10 ** 6,
                     4
@@ -327,7 +337,10 @@ namespace OrchaiLending {
             },
             stAtom: {
                 price: Utils.fixNumber(Number(stAtomPrice), 4),
-                totalCollateral: Utils.fixNumber(Number(stAtomBalance) / 10 ** 6, 4),
+                totalCollateral: Utils.fixNumber(
+                    Number(stAtomBalance) / 10 ** 6,
+                    4
+                ),
                 totalCollateralValue: Utils.fixNumber(
                     (Number(stAtomPrice) * Number(stAtomBalance)) / 10 ** 6,
                     4
@@ -335,7 +348,10 @@ namespace OrchaiLending {
             },
             stOsmo: {
                 price: Utils.fixNumber(Number(stOsmoPrice), 4),
-                totalCollateral: Utils.fixNumber(Number(stOsmoBalance) / 10 ** 6, 4),
+                totalCollateral: Utils.fixNumber(
+                    Number(stOsmoBalance) / 10 ** 6,
+                    4
+                ),
                 totalCollateralValue: Utils.fixNumber(
                     (Number(stOsmoPrice) * Number(stOsmoBalance)) / 10 ** 6,
                     4
@@ -347,14 +363,4 @@ namespace OrchaiLending {
 
 export default OrchaiLending;
 
-function fixNumber(value: number, digit: number): number {
-    return Math.round(value * 10 ** digit) / 10 ** digit;
-}
 
-function aprToApy(apr: number) {
-    let t = 31536000;
-    let bs = 5.8;
-    let b = t / bs;
-    let apy = (1 + apr / 100 / b) ** b - 1;
-    return apy * 100;
-}

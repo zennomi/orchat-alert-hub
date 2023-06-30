@@ -4,8 +4,10 @@ dotenv.config();
 import { TelegramBot } from "./telegram";
 import CronJob from "./tasks/cron-job";
 import EventListener from "./tasks/event-listener";
+import OtherProtocols from "./market/other-protocols";
 
 async function main() {
+    // await OtherProtocols.queryLiquidationList();
     TelegramBot.launchBot().then(() => {
         console.log("Bot is working...");
         CronJob.start().then(() => {

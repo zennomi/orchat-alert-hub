@@ -21,6 +21,7 @@ export const swaggerOptions = {
     apis: ["./routes/*.js"],
 };
 
+export const rowPerPage = 20;
 export const cronTime = {
     perSecond: "*/60 * * * * *",
     perMinute: "0 * * * * *",
@@ -28,6 +29,7 @@ export const cronTime = {
     perHour0: "0 0 * * * *",
     perHour10: "0 10 * * * *",
     perHour20: "0 20 * * * *",
+    perHour30: "0 30 * * * *",
     per2Hours0: "0 0 */2 * * *",
     perDay: "0 0 0 * * *",
     perMonth: "0 0 0 0 * *",
@@ -92,6 +94,8 @@ export const EVENT_TYPE: { [key: string]: string } = {
 export const MARKET_DATA_TYPE: { [key: string]: string } = {
     TOP_10_MARKET_CAP: "top_10_market_cap",
     TOKEN: "token",
+    OTHER_PROTOCOLS_APY: "other_protocols_apy",
+    OTHER_PROTOCOLS_LIQUIDATION_LIST: "other_protocols_liquidation_list",
 };
 
 export const SUPPORTED_TOKEN: { [key: string]: string } = {

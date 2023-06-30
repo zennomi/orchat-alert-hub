@@ -16,6 +16,14 @@ namespace Utils {
             minimumFractionDigits: 4,
         });
     }
+
+    export function aprToApy(apr: number) {
+        let t = 31536000;
+        let bs = 5.8;
+        let b = t / bs;
+        let apy = (1 + apr / 100 / b) ** b - 1;
+        return apy * 100;
+    }
 }
 
 export default Utils;
