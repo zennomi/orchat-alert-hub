@@ -271,6 +271,7 @@ namespace TelegramBot {
                 reply_markup: message.replyMarkup,
             });
         } catch (err) {
+        } finally {
             ctx.answerCbQuery("");
         }
     });
@@ -286,6 +287,7 @@ namespace TelegramBot {
                 reply_markup: message.replyMarkup,
             });
         } catch (err) {
+        } finally {
             ctx.answerCbQuery("");
         }
     });
@@ -919,6 +921,9 @@ function getPaginatedLiquidationList(
     dataTable.push(["#", "``address``", "deposited", "borrowed"]);
     for (let i = 0; i < rowPerPage; i++) {
         let dataIndex = (page - 1) * rowPerPage + i;
+        if (dataIndex >= data.length) {
+            break;
+        }
         dataTable.push([
             dataIndex + 1,
             "``" + data[dataIndex]["address"] + "``",
@@ -933,9 +938,9 @@ function getPaginatedLiquidationList(
             drawVerticalLine: () => false,
         }) +
         "`";
-    console.log(text);
+    // console.log(text);
     return {
         text: text,
-        replyMarkup: replyMarkup,
+        replyMarkup: maxPage == 1 ? undefined : replyMarkup,
     };
 }

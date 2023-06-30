@@ -409,7 +409,7 @@ namespace CronJob {
         },
         onComplete: () => {},
         utcOffset: +7,
-        runOnInit: false,
+        runOnInit: true,
     });
 
     export const crawlOtherProtocolsLiquidationList = new cron.CronJob({
