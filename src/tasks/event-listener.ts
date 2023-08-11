@@ -428,7 +428,7 @@ namespace EventListener {
                         }
                         let message = "";
                         if (
-                            order["bidder_refund"].includes(
+                            order["bidder_refund"]?.includes(
                                 ADDRESS_USDT as string
                             )
                         ) {
@@ -444,7 +444,7 @@ namespace EventListener {
                                 amount,
                                 "USDT"
                             );
-                        } else {
+                        } else if (!!order["bidder_refund"]) {
                             next = 6;
                             let amount = order["bidder_refund"].replace(
                                 "orai",
