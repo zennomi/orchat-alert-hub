@@ -130,7 +130,7 @@ namespace TelegramBot {
             let netAPY =
                 (borrowerInfo.totalLend * moneyMarketInfo.lendAPY -
                     borrowerInfo.loanAmount * moneyMarketInfo.borrowAPY) /
-                    (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
+                (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
             messageText += MessageCreation.borrowerInfo(
                 walletAddress,
                 borrowerInfo,
@@ -176,7 +176,7 @@ namespace TelegramBot {
             let netAPY =
                 (borrowerInfo.totalLend * moneyMarketInfo.lendAPY -
                     borrowerInfo.loanAmount * moneyMarketInfo.borrowAPY) /
-                    (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
+                (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
             messageText += MessageCreation.borrowerInfo(
                 walletAddress,
                 borrowerInfo,
@@ -648,6 +648,31 @@ namespace TelegramBot {
         }
     });
 
+    bot.command("market", async (ctx) => {
+        let result = await MarketDataRepository.findByType(
+            MARKET_DATA_TYPE.TOP_10_MARKET_CAP
+        );
+        let data = result?.data.sort((a: any, b: any) => Math.abs(Number(b.priceChangePercentage)) - Math.abs(Number(a.priceChangePercentage)));
+        let dataTable = [];
+        dataTable.push(["#", "Coin", "Price", "Price 24h Change%"]);
+        for (let i = 0; i < data.length; i++) {
+            dataTable.push([
+                i + 1,
+                data[i].symbol.toUpperCase(),
+                Utils.stringifyNumberToUSD(data[i].price),
+                Number(data[i].priceChangePercentage).toFixed(2) + "%",
+            ]);
+        }
+        let message =
+            "```\n" +
+            table(dataTable, {
+                drawHorizontalLine: () => false,
+                drawVerticalLine: () => false,
+            }) +
+            "```";
+        ctx.replyWithMarkdownV2(message);
+    })
+
     bot.command("supportedtoken", async (ctx) => {
         let listSupportedToken = Object.keys(SUPPORTED_TOKEN);
         let tokens = "";
@@ -732,7 +757,7 @@ namespace TelegramBot {
             let netAPY =
                 (borrowerInfo.totalLend * moneyMarketInfo.lendAPY -
                     borrowerInfo.loanAmount * moneyMarketInfo.borrowAPY) /
-                    (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
+                (borrowerInfo.totalLend + borrowerInfo.loanAmount) || 0;
             messageText += MessageCreation.borrowerInfo(
                 walletAddress,
                 borrowerInfo,
@@ -758,8 +783,8 @@ namespace TelegramBot {
             if (listSupportedProtocol.includes(protocol)) {
                 let marketData = await MarketDataRepository.findByType(
                     MARKET_DATA_TYPE.OTHER_PROTOCOLS_LIQUIDATION_LIST +
-                        "_" +
-                        protocol
+                    "_" +
+                    protocol
                 );
                 let data = marketData?.data.splice(0, 200);
                 let message = getPaginatedLiquidationList(
@@ -876,44 +901,44 @@ function getPaginatedLiquidationList(
         inline_keyboard: [
             page == 1
                 ? [
-                      {
-                          text: "next page",
-                          callback_data: JSON.stringify({
-                              action: "next",
-                              current: page,
-                              type: type,
-                          }),
-                      },
-                  ]
+                    {
+                        text: "next page",
+                        callback_data: JSON.stringify({
+                            action: "next",
+                            current: page,
+                            type: type,
+                        }),
+                    },
+                ]
                 : page == maxPage
-                ? [
-                      {
-                          text: "previous page",
-                          callback_data: JSON.stringify({
-                              action: "previous",
-                              current: page,
-                              type: type,
-                          }),
-                      },
-                  ]
-                : [
-                      {
-                          text: "previous page",
-                          callback_data: JSON.stringify({
-                              action: "previous",
-                              current: page,
-                              type: type,
-                          }),
-                      },
-                      {
-                          text: "next page",
-                          callback_data: JSON.stringify({
-                              action: "next",
-                              current: page,
-                              type: type,
-                          }),
-                      },
-                  ],
+                    ? [
+                        {
+                            text: "previous page",
+                            callback_data: JSON.stringify({
+                                action: "previous",
+                                current: page,
+                                type: type,
+                            }),
+                        },
+                    ]
+                    : [
+                        {
+                            text: "previous page",
+                            callback_data: JSON.stringify({
+                                action: "previous",
+                                current: page,
+                                type: type,
+                            }),
+                        },
+                        {
+                            text: "next page",
+                            callback_data: JSON.stringify({
+                                action: "next",
+                                current: page,
+                                type: type,
+                            }),
+                        },
+                    ],
         ],
     };
 

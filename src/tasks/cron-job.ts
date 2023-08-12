@@ -43,7 +43,7 @@ namespace CronJob {
                 let data = await CoinGecko.getTop10MarketCap();
 
                 let chartData = [];
-                for (let i = 0; i < data.length; i++) {
+                for (let i = 0; i < 10; i++) {
                     chartData.push({
                         symbol: data[i].symbol,
                         marketCap: data[i].marketCap,

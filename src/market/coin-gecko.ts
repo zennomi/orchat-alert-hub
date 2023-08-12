@@ -9,10 +9,10 @@ namespace CoinGecko {
             "/coins/markets" +
             "?vs_currency=usd" +
             "&order=market_cap_desc" +
-            "&per_page=10" +
+            // "&per_page=100" +
             "&page=1" +
             "&sparkline=false" +
-            "&price_change_percentage=24h" +
+            // "&price_change_percentage=24h" +
             "&locale=en";
         let response: any = {};
         let isSuccess = false;
@@ -20,9 +20,12 @@ namespace CoinGecko {
             try {
                 response = await axios.get(requestURL);
                 isSuccess = true;
-            } catch (err) {}
+            } catch (err) {
+                console.error(err)
+            }
         }
         let marketCapData = response.data;
+        console.log(marketCapData)
         let result = [];
         for (let i = 0; i < marketCapData.length; i++) {
             let data = marketCapData[i];
